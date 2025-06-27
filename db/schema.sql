@@ -1,6 +1,6 @@
 -- Note: for proper functionality of UUIDs, you may need to install the extension
 -- by running the following in the psql console:
--- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE audit_event AS ENUM ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email');
 
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 
 CREATE TABLE IF NOT EXISTS submissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username VARCHAR(100) PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
     link VARCHAR(255) NOT NULL,
     body TEXT, -- optional body text (when you visit a submission page on HN, sometimes there will be additonal text)
     flagged BOOLEAN DEFAULT FALSE,

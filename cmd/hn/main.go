@@ -25,8 +25,8 @@ func main() {
 	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
+		db.CreateUser("trent", "example@example.com", "1.1.1.1")
 		return c.JSON(Response{Message: "ok", Status: 200})
-
 	})
 
 	app.Listen(":3000")
