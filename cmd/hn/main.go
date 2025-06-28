@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	// my packages
-	"github.com/trentwiles/hackernews/internal/db"
+	//"github.com/trentwiles/hackernews/internal/db"
 
 	_ "github.com/lib/pq"
 )
@@ -25,7 +25,6 @@ func main() {
 	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
-		db.CreateUser("trent", "example@example.com", "1.1.1.1")
 		return c.JSON(Response{Message: "ok", Status: 200})
 	})
 

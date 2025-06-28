@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     registered_ip VARCHAR(100) NOT NULL
 );
 
+-- known as "UserMetadata" when represented as a Go struct
 CREATE TABLE IF NOT EXISTS bio (
     username VARCHAR(100) PRIMARY KEY,
     full_name VARCHAR(100),

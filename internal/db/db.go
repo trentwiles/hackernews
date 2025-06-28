@@ -18,6 +18,18 @@ type User struct {
 	registered_ip string
 }
 
+type UserMetadata struct {
+	username string
+	full_name string
+    birthdate string
+    bio_text string
+}
+
+type CompleteUser struct {
+	user User
+	metadata UserMetadata
+}
+
 func Connect() (*sql.DB, error) {
 	config.LoadEnv()
 	// connect to postgres
@@ -47,7 +59,24 @@ func CreateUser(user User) {
     }
 }
 
-func SearchUser(user User) User {
+func CreateUserMetadata(metadata UserMetadata) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	query := `INSERT INTO bio (username, full_name, birthdate, bio_text) VALUES ($1, $2, $3, $4)`
+
+    _, err = db.Exec(query, metadata.username, metadata.full_name, metadata.birthdate, metadata.bio_text)
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+
+func SearchUser(user User) CompleteUser {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
@@ -83,11 +112,27 @@ func SearchUser(user User) User {
         }
     }
 
-	return tempUser
+	// now that we've got the user themselves, let's grab their metadata
+	var tempMetadata = UserMetadata{}
+	if tempUser.username != "" {
+		rows, err = db.Query("SELECT * FROM bio WHERE username = $1", tempUser.username)
+		if err != nil {
+            log.Fatal(err)
+        }
+
+		for rows.Next() {
+			err := rows.Scan(&tempMetadata.username, &tempMetadata.full_name, &tempMetadata.birthdate, &tempMetadata.bio_text)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	return CompleteUser{user: tempUser, metadata: tempMetadata}
 }
 
 func DeleteUser(user User) {
-// connection via connection function
+	// connection via connection function
 	db, err := Connect()
 	if err != nil {
         log.Fatal(err)
@@ -112,4 +157,6 @@ func DeleteUser(user User) {
 			log.Fatal(err)
 		}
 	}
+
+	// additional note: user bios are cascading, so Postgres will delete them automatically
 }
