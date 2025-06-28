@@ -30,6 +30,14 @@ type CompleteUser struct {
 	metadata UserMetadata
 }
 
+type Submission struct {
+	id string
+    username string
+    link string
+    body string
+    flagged bool
+}
+
 func Connect() (*sql.DB, error) {
 	config.LoadEnv()
 	// connect to postgres
@@ -159,4 +167,114 @@ func DeleteUser(user User) {
 	}
 
 	// additional note: user bios are cascading, so Postgres will delete them automatically
+}
+
+func DeleteSubmission(submission Submission) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if submission.id == "" {
+		log.Fatal("To delete a submission, you must pass a submission ID")
+	}
+
+	_, err = db.Exec("DELETE FROM submissions WHERE id = $1", submission.id)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func SearchSubmission(stub Submission) Submission {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if stub.id == "" {
+		log.Fatal("Please use an ID when searching for a submission")
+	}
+
+	rows, err := db.Query("SELECT * FROM submissions WHERE id = $1", stub.id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&stub.id, &stub.username, &stub.link, &stub.body, &stub.flagged)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return stub
+	}
+
+	return Submission{}
+}
+
+func CreateSubmission(submission Submission) string {
+	db, err := Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	query := `
+		INSERT INTO submissions (username, link, body, flagged)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id;
+	`
+
+	var id string
+	err = db.QueryRow(query, submission.username, submission.link, submission.body, submission.flagged).Scan(&id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return id
+}
+
+func UpdateSubmission(stub Submission) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if stub.id == "" {
+		log.Fatal("Please use an ID when searching for a submission")
+	}
+
+	_, err = db.Exec("UPDATE submissions SET link = $1, body = $2, flagged = $3 WHERE id = $4", stub.link, stub.body, stub.flagged, stub.id)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
+func UpdateUserMetadata(metadata UserMetadata) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if metadata.username == "" {
+		log.Fatal("Please use a username updating user metadata")
+	}
+
+	_, err = db.Exec("UPDATE bio SET full_name = $1, birthdate = $2, bio_text = $3 WHERE username = $4", metadata.full_name, metadata.birthdate, metadata.bio_text, metadata.username)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
