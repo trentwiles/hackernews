@@ -38,6 +38,20 @@ type Submission struct {
     flagged bool
 }
 
+// enum equiv in Go for audit log events
+// ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email')
+type AuditEvent string
+
+const (
+	Login  AuditEvent = "login"
+	Logout   AuditEvent = "logout"
+	FailedLogin  AuditEvent = "failed_login"
+	Post AuditEvent = "post"
+	Comment AuditEvent = "comment"
+	PostClick AuditEvent = "post_click"
+	SentEmail AuditEvent = "sent_email"
+)
+
 func Connect() (*sql.DB, error) {
 	config.LoadEnv()
 	// connect to postgres
@@ -278,3 +292,57 @@ func UpdateUserMetadata(metadata UserMetadata) {
 		log.Fatal(err)
 	}
 }
+
+
+// true on success (new insert or update)
+// false on failure (attempting to "double vote")
+func Vote(user User, submission Submission, isUpvote bool) bool {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	// check that we have a valid username + submission id combo
+	if user.username == "" || submission.id == "" {
+		log.Fatal("username or submission id is blank (required to vote on a submission)")
+	}
+
+	// check if a vote already exists
+	// if so run an update instead
+	var wasPositive bool
+	err = db.QueryRow("SELECT positive FROM votes WHERE submission_id = $1 AND voter_username = $2", submission.id, user.username).Scan(&wasPositive)
+
+	if err == sql.ErrNoRows {
+		// if we enter this, there was no record found, so we need to do an insert
+		query := `
+			INSERT INTO votes (submission_id, voter_username, positive)
+			VALUES ($1, $2, $3)
+		`
+
+		_, err = db.Exec(query, user.username, submission.id, isUpvote)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return true
+	} else if err != nil {
+		log.Fatal(err)
+	}
+
+	// if we hit this point, a record was found, and now we just need to update it
+	// "can't vote twice"
+	if (isUpvote == wasPositive) {
+		return false
+	}
+
+	_, err = db.Exec("UPDATE votes SET positive = $1 WHERE voter_username = $2 AND submission_id = $3", isUpvote, user.username, submission.id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return true
+}
+
+func CreateLog(user User, event AuditEvent, ip string, )
