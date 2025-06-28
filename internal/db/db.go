@@ -345,4 +345,36 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 	return true
 }
 
-func CreateLog(user User, event AuditEvent, ip string, )
+func CreateMagicLink(user User) string {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if user.username == "" || user.email == "" {
+		log.Fatal("to create a magic link, user must have a username and email")
+	}
+
+	// first, delete all old magic links for given user
+	_, err = db.Exec("DELETE FROM magic_links WHERE username = $1", user.username)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// next generate the secure token
+	var token string = SecureToken(100)
+	query := `
+			INSERT INTO magic_links (username, token)
+			VALUES ($1, $2)
+		`
+
+	_, err = db.Exec(query, user.username, token)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	return token
+}

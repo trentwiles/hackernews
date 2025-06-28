@@ -14,6 +14,13 @@ CREATE TABLE IF NOT EXISTS users (
     registered_ip VARCHAR(100) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS magic_links (
+    username VARCHAR(100) PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+);
+
 -- known as "UserMetadata" when represented as a Go struct
 CREATE TABLE IF NOT EXISTS bio (
     username VARCHAR(100) PRIMARY KEY,

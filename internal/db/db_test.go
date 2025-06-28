@@ -2,6 +2,7 @@ package db
 
 import (
 	"testing"
+	"fmt"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -58,6 +59,17 @@ func TestSubmissionCreation(t *testing.T) {
 
 	searchedSubmission = SearchSubmission(Submission{id: generatedID})
 	assert.Equal(t, searchedSubmission.link, "", "submission delete, ensure link is blank")
+
+	DeleteUser(james)
+}
+
+func TestCreateMagicLink(t *testing.T) {
+	// need a test user in the database due to FKs
+	var james User = User{username: "james", email: "test@example.com", registered_ip: "127.0.0.1"}
+	CreateUser(james)
+
+	var insertedToken string = CreateMagicLink(james)
+	fmt.Println(insertedToken)
 
 	DeleteUser(james)
 }
