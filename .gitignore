@@ -1,2 +1,6 @@
 .env
 go.sum
+*.exe
+bin/
+tmp/
+testdata/
