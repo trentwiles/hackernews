@@ -28,5 +28,11 @@ func main() {
 		return c.JSON(Response{Message: "ok", Status: 200})
 	})
 
+
+	// 404
+	app.Use(func(c *fiber.Ctx) error {
+        return c.JSON(Response{Message: "not found", Status: 404})
+    })
+
 	app.Listen(":3000")
 }

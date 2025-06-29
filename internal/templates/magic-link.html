@@ -1,0 +1,48 @@
+<style>
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .fancy-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .fancy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(135deg, #a777e3, #6e8efb);
+  }
+
+  .fancy-btn:active {
+    transform: scale(0.97);
+  }
+</style>
+
+<body>
+  <div class="content">
+    <h1>Magic Sign In Link</h1>
+    <br>
+    <p>Someone requested a magic log in link for this email address. If you did not do this, you can safely ignore this message.</p>
+    <br>
+    <a href="https://www.example.com/api/v1/magic?token={{.Token}}">
+      <button class="fancy-btn">Log In</button>
+    </a>
+  </div>
+</body>

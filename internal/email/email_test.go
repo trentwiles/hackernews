@@ -8,5 +8,9 @@ import (
 )
 
 func TestUserCreation(t *testing.T) {
-	SendEmail(Email{to: "", subject: "Hey! this is a test", message: "hi this is a test"})
+	SendEmail(Email{to: "me@trentwil.es", subject: "Hey! this is a test", message: "hi this is a test"})
+}
+
+func TestMagicLink(t *testing.T) {
+	SendEmailTemplate(MagicLinkEmail{to: "me@trentwil.es", token: "123123123"})
 }
