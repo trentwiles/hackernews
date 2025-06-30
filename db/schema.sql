@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS magic_links (
     username VARCHAR(100) PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- known as "UserMetadata" when represented as a Go struct

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Barebone Client to Test Login</title>
+</head>
+
+<body>
+    <form id="myForm">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username" value="" required><br>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" value="" required><br><br>
+        <input type="submit" value="Log In">
+    </form>
+
+    <script>
+        const form = document.getElementById('myForm');
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const data = {
+                username: form.username.value,
+                email: form.email.value,
+                captchaToken: "testdata"
+            };
+
+            const response = await fetch('http://localhost:3000/api/v1/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            console.log(result);
+        });
+    </script>
+
+</body>
+
+</html>

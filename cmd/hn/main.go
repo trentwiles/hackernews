@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	// my packages
 	"github.com/trentwiles/hackernews/internal/captcha"
@@ -20,9 +21,9 @@ type BasicResponse struct {
 }
 
 type LoginRequest struct {
-    Email string `json:"email"`
-	Username string `json:"username"`
-    CaptchaToken string `json:"captchaToken"`
+	Email        string `json:"email"`
+	Username     string `json:"username"`
+	CaptchaToken string `json:"captchaToken"`
 }
 
 var version string = "/api/v1"
@@ -30,6 +31,7 @@ var version string = "/api/v1"
 func main() {
 	// create web app
 	app := fiber.New()
+	app.Use(cors.New())
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
@@ -40,7 +42,7 @@ func main() {
 		return c.JSON(BasicResponse{Message: "Logged in as " + username, Status: 200})
 	})
 
-	app.Post(version + "/login", func(c *fiber.Ctx) error {
+	app.Post(version+"/login", func(c *fiber.Ctx) error {
 		var req LoginRequest
 
 		if err := c.BodyParser(&req); err != nil {
@@ -69,7 +71,7 @@ func main() {
 
 		var databaseUser db.CompleteUser = db.SearchUser(db.User{Email: req.Email})
 		// case exists, but doesn't match
-		if databaseUser.User.Username != req.Username {
+		if databaseUser.User.Username != "" && databaseUser.User.Username != req.Username {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Email with this username already exists, and the submitted email doesn't said username",
 			})
@@ -82,23 +84,23 @@ func main() {
 
 		// email does not exist in the database
 		if databaseUser.User.Username == "" {
-			fmt.Printf("Email %s does not have a username tied to it in the database.", req.Email)
+			fmt.Printf("Email %s does not have a username tied to it in the database.\n", req.Email)
 		}
 
-		var token string = db.CreateMagicLink(db.User{Email: req.Email})
-		_ = email.MagicLinkEmail(email.MagicLinkEmail{To: req.Email, Token: token})
+		var token string = db.CreateMagicLink(db.User{Username: req.Username, Email: req.Email})
+		email.SendEmailTemplate(email.MagicLinkEmail{To: req.Email, Token: token})
 
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"message": "Emailed a magic link to " + req.Email})
+		return c.JSON(fiber.Map{"message": "Emailed a magic link to " + req.Email})
 	})
 
-	app.Get(version + "/magic", func(c *fiber.Ctx) error {
+	app.Get(version+"/magic", func(c *fiber.Ctx) error {
 		token := c.Query("token")
 		if token == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please pass a valid token parameter"})
 		}
 
 		// verify token
-		var user db.User = db.ValidateMagicLink(token)
+		var user db.User = db.ValidateMagicLink(token, c.IP())
 		var blankUser db.User = db.User{}
 		if user == blankUser {
 			return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"message": "Magic link was not found. Maybe it expired?"})

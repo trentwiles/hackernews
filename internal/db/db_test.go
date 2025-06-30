@@ -57,3 +57,7 @@ func TestCreateMagicLink(t *testing.T) {
     fmt.Println(insertedToken)
     DeleteUser(james)
 }
+
+func TestCreateMagicLinkTwo(t *testing.T) {
+    fmt.Println(CreateMagicLink(User{Email: "me@trentwil.es"}))
+}

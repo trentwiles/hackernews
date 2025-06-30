@@ -65,7 +65,7 @@ func SendEmailTemplate(magic MagicLinkEmail) {
 	address := host + ":" + port
 
 	// TEMPLATE HANDLING
-	tmpl := template.Must(template.ParseFiles("../templates/magic-link.html"))
+	tmpl := template.Must(template.ParseFiles("internal/templates/magic-link.html"))
 	var buf bytes.Buffer
 	tmpl.Execute(&buf, struct {Token string}{Token: magic.Token})
 	// END TEMPLATE HANDLING

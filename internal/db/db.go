@@ -367,11 +367,11 @@ func CreateMagicLink(user User) string {
 	// next generate the secure token
 	var token string = SecureToken(100)
 	query := `
-			INSERT INTO magic_links (username, token)
-			VALUES ($1, $2)
+			INSERT INTO magic_links (username, email, token)
+			VALUES ($1, $2, $3)
 		`
-
-	_, err = db.Exec(query, user.Username, token)
+	
+	_, err = db.Exec(query, user.Username, user.Email, token)
     if err != nil {
         log.Fatal(err)
     }
@@ -394,7 +394,7 @@ func DeleteMagicLink(token string) {
 	}
 }
 
-func ValidateMagicLink(token string) User {
+func ValidateMagicLink(token string, ip string) User {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
@@ -408,15 +408,29 @@ func ValidateMagicLink(token string) User {
 	}
 
 	var username string
-	err = db.QueryRow("SELECT username FROM magic_links WHERE token = $1", token).Scan(&username)
+	var email string
+
+	err = db.QueryRow("SELECT username, email FROM magic_links WHERE token = $1", token).Scan(&username, &email)
+
+
+	fmt.Printf("Database search found user %s and email %s for token %s\n", username, email, token)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if username == "" {
 		return User{}
 	}
 
+	if ip == "" {
+		log.Fatal("Registration IP address required")
+	}
+
 	DeleteMagicLink(token)
 
-	var user User = SearchUser(User{Username: username}).User
+	var toInsert User = User{Username: username, Email: email, Registered_ip: ip}
+	CreateUser(toInsert)
 
-	return user
+	return toInsert
 }
