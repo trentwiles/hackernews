@@ -37,12 +37,13 @@ func TestSubmissionCreation(t *testing.T) {
     // need a test user in the database due to FKs
     var james User = User{Username: "james", Email: "test@example.com", Registered_ip: "127.0.0.1"}
     CreateUser(james)
-    var testSubmission Submission = Submission{Username: "james", Link: "https://www.google.com", Body: "here's a search engine", Flagged: true}
+    var testSubmission Submission = Submission{Username: "james", Title: "Google Search", Link: "https://www.google.com", Body: "here's a search engine", Flagged: true}
     var generatedID string = CreateSubmission(testSubmission)
     var searchedSubmission Submission = SearchSubmission(Submission{Id: generatedID})
     assert.Equal(t, searchedSubmission.Body, testSubmission.Body, "submission insert, check body is the same")
     assert.Equal(t, searchedSubmission.Flagged, testSubmission.Flagged, "submission insert, check flagged is the same")
     assert.Equal(t, searchedSubmission.Link, testSubmission.Link, "submission insert, check link is the same")
+    assert.Equal(t, searchedSubmission.Title, testSubmission.Title, "submission insert, check title is the same")
     DeleteSubmission(Submission{Id: generatedID})
     searchedSubmission = SearchSubmission(Submission{Id: generatedID})
     assert.Equal(t, searchedSubmission.Link, "", "submission delete, ensure link is blank")

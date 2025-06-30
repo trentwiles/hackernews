@@ -32,6 +32,7 @@ type CompleteUser struct {
 
 type Submission struct {
 	Id string
+	Title string
     Username string
     Link string
     Body string
@@ -221,7 +222,7 @@ func SearchSubmission(stub Submission) Submission {
 	}
 
 	for rows.Next() {
-		err := rows.Scan(&stub.Id, &stub.Username, &stub.Link, &stub.Body, &stub.Flagged)
+		err := rows.Scan(&stub.Id, &stub.Username, &stub.Title, &stub.Link, &stub.Body, &stub.Flagged)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -241,12 +242,12 @@ func CreateSubmission(submission Submission) string {
 
 	query := `
 		INSERT INTO submissions (username, link, body, flagged)
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id;
 	`
 
 	var id string
-	err = db.QueryRow(query, submission.Username, submission.Link, submission.Body, submission.Flagged).Scan(&id)
+	err = db.QueryRow(query, submission.Username, submission.Title, submission.Link, submission.Body, submission.Flagged).Scan(&id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -267,7 +268,7 @@ func UpdateSubmission(stub Submission) {
 		log.Fatal("Please use an ID when searching for a submission")
 	}
 
-	_, err = db.Exec("UPDATE submissions SET link = $1, body = $2, flagged = $3 WHERE id = $4", stub.Link, stub.Body, stub.Flagged, stub.Id)
+	_, err = db.Exec("UPDATE submissions SET link = $1, title = $2, body = $3, flagged = $4 WHERE id = $5", stub.Link, stub.Title, stub.Body, stub.Flagged, stub.Id)
 	if err != nil {
 		log.Fatal(err)
 	}

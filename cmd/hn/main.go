@@ -15,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// consider moving these to a types.go file?
 type BasicResponse struct {
 	Message string
 	Status  int
@@ -23,6 +24,13 @@ type BasicResponse struct {
 type LoginRequest struct {
 	Email        string `json:"email"`
 	Username     string `json:"username"`
+	CaptchaToken string `json:"captchaToken"`
+}
+
+type SubmissionRequest struct {
+	Link string `json:"link"`
+	Title string `json:"title"`
+	Body string `json:"body"`
 	CaptchaToken string `json:"captchaToken"`
 }
 
@@ -61,6 +69,26 @@ func main() {
 		if !captcha.ValidateToken(req.CaptchaToken) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Invalid Google Captcha response, try again later",
+			})
+		}
+
+		// is the email address even valid?
+		if !IsValidEmail(req.Email) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid email (failed regex)",
+			})
+		}
+
+		// are they both under 100 chars (limit as defined in postgres)
+		if len(req.Email) > 100 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid email (over 100 chars)",
+			})
+		}
+
+		if len(req.Username) > 100 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid username (over 100 chars)",
 			})
 		}
 
@@ -110,6 +138,52 @@ func main() {
 		jwtToken, _ = jwt.GenerateJWT(user.Username, 60)
 
 		return c.JSON(fiber.Map{"message": "Logged in as " + user.Username, "token": jwtToken})
+	})
+
+	app.Post(version + "/submit", func(c *fiber.Ctx) error {
+		var req SubmissionRequest
+
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		if req.CaptchaToken == "" || req.Link == "" || req.Title == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Missing one or more of the following parameters: captchaToken, title, link",
+			})
+		}
+
+		// is the link valid (passes regex and length restriction?)
+		if !IsValidURL(req.Link) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid URL (failed regex)",
+			})
+		}
+
+		if len(req.Link) > 255 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid URL (exceeds 255 char limit)",
+			})
+		}
+
+		// passed all checks and restrictions now insert into database
+		var id string = db.CreateSubmission(db.Submission{Title: req.Title, Username: username, Body: req.Body, Link: req.Link})
+
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"id": id,
+		})
+	})
+
+	app.Post(version+"/bio", func(c *fiber.Ctx) error {
+
 	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
