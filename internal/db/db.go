@@ -415,7 +415,11 @@ func ValidateMagicLink(token string, ip string) User {
 
 	fmt.Printf("Database search found user %s and email %s for token %s\n", username, email, token)
 
-	if err != nil {
+	if err == sql.ErrNoRows {
+		fmt.Printf("No user found for token: %s\n", token)
+		// Empty user = invalid token
+		return User{}
+	} else {
 		log.Fatal(err)
 	}
 
