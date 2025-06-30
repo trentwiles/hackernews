@@ -6,9 +6,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/trentwiles/hackernews/internal/config"
+	"strings"
 )
 
-func generateJWT(username string, expiresIn int) (string, error) {
+func GenerateJWT(username string, expiresIn int) (string, error) {
 	config.LoadEnv()
 	claims := jwt.MapClaims{
 		"username": username,
@@ -20,7 +21,7 @@ func generateJWT(username string, expiresIn int) (string, error) {
 	return token.SignedString([]byte(config.GetEnv("JWT_TOKEN")))
 }
 
-func verifyJWT(tokenString string) (string, error) {
+func VerifyJWT(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -54,4 +55,33 @@ func verifyJWT(tokenString string) (string, error) {
 	}
 
 	return claims["username"].(string), nil
+}
+
+func ParseAuthHeader(header string) (bool, string) {
+	// Header should come in the format: Bearer <TOKEN>
+	if header == "" {
+		return false, ""
+	}
+
+	var l []string = strings.Split(header, " ")
+
+	if len(l) != 2 {
+		return false, ""
+	}
+
+	if l[0] != "Bearer" {
+		return false, ""
+	}
+
+	var token string = l[1]
+
+	username, err := VerifyJWT(token)
+
+	if err != nil {
+		return false, ""
+	}
+
+	fmt.Printf("token for username %s parsed", username)
+
+	return (username != ""), username
 }

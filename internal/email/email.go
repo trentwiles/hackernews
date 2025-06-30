@@ -10,14 +10,14 @@ import (
 )
 
 type Email struct {
-	to      string
-	subject string
-	message string
+	To      string
+	Subject string
+	Message string
 }
 
 type MagicLinkEmail struct {
-	to    string
-	token string
+	To    string
+	Token string
 }
 
 func SendEmail(email Email) {
@@ -26,17 +26,17 @@ func SendEmail(email Email) {
 	from := config.GetEnv("EMAIL_USERNAME")     // <your_email>@gmail.com
 	password := config.GetEnv("EMAIL_PASSWORD") // google app password
 
-	toEmailAddress := email.to
+	toEmailAddress := email.To
 	to := []string{toEmailAddress}
 
 	host := config.GetEnv("EMAIL_HOST")
 	port := "587"
 	address := host + ":" + port
 
-	subject := email.subject
-	body := email.message
+	subject := email.Subject
+	body := email.Message
 
-	message := []byte("To: " + email.to + "\r\n" +
+	message := []byte("To: " + email.To + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"MIME-version: 1.0;\r\n" +
 		"Content-Type: text/plain; charset=\"UTF-8\";\r\n" +
@@ -57,7 +57,7 @@ func SendEmailTemplate(magic MagicLinkEmail) {
 	from := config.GetEnv("EMAIL_USERNAME")     // <your_email>@gmail.com
 	password := config.GetEnv("EMAIL_PASSWORD") // google app password
 
-	toEmailAddress := magic.to
+	toEmailAddress := magic.To
 	to := []string{toEmailAddress}
 
 	host := config.GetEnv("EMAIL_HOST")
@@ -67,12 +67,12 @@ func SendEmailTemplate(magic MagicLinkEmail) {
 	// TEMPLATE HANDLING
 	tmpl := template.Must(template.ParseFiles("../templates/magic-link.html"))
 	var buf bytes.Buffer
-	tmpl.Execute(&buf, struct {Token string}{Token: magic.token})
+	tmpl.Execute(&buf, struct {Token string}{Token: magic.Token})
 	// END TEMPLATE HANDLING
 
 	subject := "Your Fake Hacker News Magic Link"
 
-	message := []byte("To: " + magic.to + "\r\n" +
+	message := []byte("To: " + magic.To + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"MIME-version: 1.0;\r\n" +
 		"Content-Type: text/html; charset=\"UTF-8\";\r\n" +

@@ -12,30 +12,30 @@ import (
 
 // Go representations of database objects
 type User struct {
-	username string
-	email string
-	created_at string
-	registered_ip string
+	Username string
+	Email string
+	Created_at string
+	Registered_ip string
 }
 
 type UserMetadata struct {
-	username string
-	full_name string
-    birthdate string
-    bio_text string
+	Username string
+	Full_name string
+    Birthdate string
+    Bio_text string
 }
 
 type CompleteUser struct {
-	user User
-	metadata UserMetadata
+	User User
+	Metadata UserMetadata
 }
 
 type Submission struct {
-	id string
-    username string
-    link string
-    body string
-    flagged bool
+	Id string
+    Username string
+    Link string
+    Body string
+    Flagged bool
 }
 
 // enum equiv in Go for audit log events
@@ -75,7 +75,7 @@ func CreateUser(user User) {
 
 	query := `INSERT INTO users (username, email, registered_ip) VALUES ($1, $2, $3)`
 
-    _, err = db.Exec(query, user.username, user.email, user.registered_ip)
+    _, err = db.Exec(query, user.Username, user.Email, user.Registered_ip)
     if err != nil {
         log.Fatal(err)
     }
@@ -92,7 +92,7 @@ func CreateUserMetadata(metadata UserMetadata) {
 
 	query := `INSERT INTO bio (username, full_name, birthdate, bio_text) VALUES ($1, $2, $3, $4)`
 
-    _, err = db.Exec(query, metadata.username, metadata.full_name, metadata.birthdate, metadata.bio_text)
+    _, err = db.Exec(query, metadata.Username, metadata.Full_name, metadata.Birthdate, metadata.Bio_text)
     if err != nil {
         log.Fatal(err)
     }
@@ -108,19 +108,19 @@ func SearchUser(user User) CompleteUser {
 	// end connection via connection function
 
 	// two cases: search by username and search by email
-	if (user.email == "" && user.username == "") {
+	if (user.Email == "" && user.Username == "") {
 		log.Fatal("To select a user, you must be either an email or username")
 	}
 
 	var rows *sql.Rows
 	
-	if (user.username != "") {
-		rows, err = db.Query("SELECT * FROM users WHERE username = $1", user.username)
+	if (user.Username != "") {
+		rows, err = db.Query("SELECT * FROM users WHERE username = $1", user.Username)
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		rows, err = db.Query("SELECT * FROM users WHERE email = $1", user.email)
+		rows, err = db.Query("SELECT * FROM users WHERE email = $1", user.Email)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -128,7 +128,7 @@ func SearchUser(user User) CompleteUser {
 
 	var tempUser = User{}
 	for rows.Next() {
-        err := rows.Scan(&tempUser.username, &tempUser.email, &tempUser.created_at, &tempUser.registered_ip)
+        err := rows.Scan(&tempUser.Username, &tempUser.Email, &tempUser.Created_at, &tempUser.Registered_ip)
         if err != nil {
             log.Fatal(err)
         }
@@ -136,21 +136,21 @@ func SearchUser(user User) CompleteUser {
 
 	// now that we've got the user themselves, let's grab their metadata
 	var tempMetadata = UserMetadata{}
-	if tempUser.username != "" {
-		rows, err = db.Query("SELECT * FROM bio WHERE username = $1", tempUser.username)
+	if tempUser.Username != "" {
+		rows, err = db.Query("SELECT * FROM bio WHERE username = $1", tempUser.Username)
 		if err != nil {
             log.Fatal(err)
         }
 
 		for rows.Next() {
-			err := rows.Scan(&tempMetadata.username, &tempMetadata.full_name, &tempMetadata.birthdate, &tempMetadata.bio_text)
+			err := rows.Scan(&tempMetadata.Username, &tempMetadata.Full_name, &tempMetadata.Birthdate, &tempMetadata.Bio_text)
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
 	}
 
-	return CompleteUser{user: tempUser, metadata: tempMetadata}
+	return CompleteUser{User: tempUser, Metadata: tempMetadata}
 }
 
 func DeleteUser(user User) {
@@ -163,18 +163,18 @@ func DeleteUser(user User) {
 	// end connection via connection function
 
 	// two cases: search by username and search by email
-	if (user.email == "" && user.username == "") {
+	if (user.Email == "" && user.Username == "") {
 		log.Fatal("To delete a user, you must be either an email or username")
 	}
 
 	
-	if (user.username != "") {
-		_, err = db.Exec("DELETE FROM users WHERE username = $1", user.username)
+	if (user.Username != "") {
+		_, err = db.Exec("DELETE FROM users WHERE username = $1", user.Username)
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		_, err = db.Exec("DELETE FROM users WHERE email = $1", user.email)
+		_, err = db.Exec("DELETE FROM users WHERE email = $1", user.Email)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -192,11 +192,11 @@ func DeleteSubmission(submission Submission) {
 	defer db.Close()
 	// end connection via connection function
 
-	if submission.id == "" {
+	if submission.Id == "" {
 		log.Fatal("To delete a submission, you must pass a submission ID")
 	}
 
-	_, err = db.Exec("DELETE FROM submissions WHERE id = $1", submission.id)
+	_, err = db.Exec("DELETE FROM submissions WHERE id = $1", submission.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -211,17 +211,17 @@ func SearchSubmission(stub Submission) Submission {
 	defer db.Close()
 	// end connection via connection function
 
-	if stub.id == "" {
+	if stub.Id == "" {
 		log.Fatal("Please use an ID when searching for a submission")
 	}
 
-	rows, err := db.Query("SELECT * FROM submissions WHERE id = $1", stub.id)
+	rows, err := db.Query("SELECT * FROM submissions WHERE id = $1", stub.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for rows.Next() {
-		err := rows.Scan(&stub.id, &stub.username, &stub.link, &stub.body, &stub.flagged)
+		err := rows.Scan(&stub.Id, &stub.Username, &stub.Link, &stub.Body, &stub.Flagged)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -246,7 +246,7 @@ func CreateSubmission(submission Submission) string {
 	`
 
 	var id string
-	err = db.QueryRow(query, submission.username, submission.link, submission.body, submission.flagged).Scan(&id)
+	err = db.QueryRow(query, submission.Username, submission.Link, submission.Body, submission.Flagged).Scan(&id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -263,11 +263,11 @@ func UpdateSubmission(stub Submission) {
 	defer db.Close()
 	// end connection via connection function
 
-	if stub.id == "" {
+	if stub.Id == "" {
 		log.Fatal("Please use an ID when searching for a submission")
 	}
 
-	_, err = db.Exec("UPDATE submissions SET link = $1, body = $2, flagged = $3 WHERE id = $4", stub.link, stub.body, stub.flagged, stub.id)
+	_, err = db.Exec("UPDATE submissions SET link = $1, body = $2, flagged = $3 WHERE id = $4", stub.Link, stub.Body, stub.Flagged, stub.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -283,11 +283,11 @@ func UpdateUserMetadata(metadata UserMetadata) {
 	defer db.Close()
 	// end connection via connection function
 
-	if metadata.username == "" {
+	if metadata.Username == "" {
 		log.Fatal("Please use a username updating user metadata")
 	}
 
-	_, err = db.Exec("UPDATE bio SET full_name = $1, birthdate = $2, bio_text = $3 WHERE username = $4", metadata.full_name, metadata.birthdate, metadata.bio_text, metadata.username)
+	_, err = db.Exec("UPDATE bio SET full_name = $1, birthdate = $2, bio_text = $3 WHERE username = $4", metadata.Full_name, metadata.Birthdate, metadata.Bio_text, metadata.Username)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -306,14 +306,14 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 	// end connection via connection function
 
 	// check that we have a valid username + submission id combo
-	if user.username == "" || submission.id == "" {
+	if user.Username == "" || submission.Id == "" {
 		log.Fatal("username or submission id is blank (required to vote on a submission)")
 	}
 
 	// check if a vote already exists
 	// if so run an update instead
 	var wasPositive bool
-	err = db.QueryRow("SELECT positive FROM votes WHERE submission_id = $1 AND voter_username = $2", submission.id, user.username).Scan(&wasPositive)
+	err = db.QueryRow("SELECT positive FROM votes WHERE submission_id = $1 AND voter_username = $2", submission.Id, user.Username).Scan(&wasPositive)
 
 	if err == sql.ErrNoRows {
 		// if we enter this, there was no record found, so we need to do an insert
@@ -322,7 +322,7 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 			VALUES ($1, $2, $3)
 		`
 
-		_, err = db.Exec(query, user.username, submission.id, isUpvote)
+		_, err = db.Exec(query, submission.Id, user.Username, isUpvote)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -337,7 +337,7 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 		return false
 	}
 
-	_, err = db.Exec("UPDATE votes SET positive = $1 WHERE voter_username = $2 AND submission_id = $3", isUpvote, user.username, submission.id)
+	_, err = db.Exec("UPDATE votes SET positive = $1 WHERE voter_username = $2 AND submission_id = $3", isUpvote, user.Username, submission.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -354,12 +354,12 @@ func CreateMagicLink(user User) string {
 	defer db.Close()
 	// end connection via connection function
 
-	if user.username == "" || user.email == "" {
+	if user.Username == "" || user.Email == "" {
 		log.Fatal("to create a magic link, user must have a username and email")
 	}
 
 	// first, delete all old magic links for given user
-	_, err = db.Exec("DELETE FROM magic_links WHERE username = $1", user.username)
+	_, err = db.Exec("DELETE FROM magic_links WHERE username = $1", user.Username)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -371,7 +371,7 @@ func CreateMagicLink(user User) string {
 			VALUES ($1, $2)
 		`
 
-	_, err = db.Exec(query, user.username, token)
+	_, err = db.Exec(query, user.Username, token)
     if err != nil {
         log.Fatal(err)
     }
