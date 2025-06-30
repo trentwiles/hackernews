@@ -1,13 +1,15 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 
 	// my packages
+	"github.com/trentwiles/hackernews/internal/captcha"
 	"github.com/trentwiles/hackernews/internal/db"
 	"github.com/trentwiles/hackernews/internal/email"
 	"github.com/trentwiles/hackernews/internal/jwt"
-	"github.com/trentwiles/hackernews/internal/captcha"
 
 	_ "github.com/lib/pq"
 )
@@ -66,18 +68,46 @@ func main() {
 		//		doesn't? => send magic link email, once user has verified the magic link, marry them together in the database
 
 		var databaseUser db.CompleteUser = db.SearchUser(db.User{Email: req.Email})
+		// case exists, but doesn't match
 		if databaseUser.User.Username != req.Username {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Email with this username already exists, and the submitted email doesn't said username",
 			})
 		}
 
+		// case exists and does match
+		if databaseUser.User.Username == req.Username {
+			fmt.Printf("Attempted a sign in for %s\n", req.Username)
+		}
+
+		// email does not exist in the database
+		if databaseUser.User.Username == "" {
+			fmt.Printf("Email %s does not have a username tied to it in the database.", req.Email)
+		}
 
 		var token string = db.CreateMagicLink(db.User{Email: req.Email})
-
 		_ = email.MagicLinkEmail(email.MagicLinkEmail{To: req.Email, Token: token})
 
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{})
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"message": "Emailed a magic link to " + req.Email})
+	})
+
+	app.Get(version + "/magic", func(c *fiber.Ctx) error {
+		token := c.Query("token")
+		if token == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please pass a valid token parameter"})
+		}
+
+		// verify token
+		var user db.User = db.ValidateMagicLink(token)
+		var blankUser db.User = db.User{}
+		if user == blankUser {
+			return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"message": "Magic link was not found. Maybe it expired?"})
+		}
+
+		var jwtToken string
+		jwtToken, _ = jwt.GenerateJWT(user.Username, 60)
+
+		return c.JSON(fiber.Map{"message": "Logged in as " + user.Username, "token": jwtToken})
 	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {

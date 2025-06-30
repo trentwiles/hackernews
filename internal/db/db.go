@@ -378,3 +378,45 @@ func CreateMagicLink(user User) string {
 
 	return token
 }
+
+func DeleteMagicLink(token string) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	_, err = db.Exec("DELETE FROM magic_links WHERE token = $1", token)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func ValidateMagicLink(token string) User {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if token == "" {
+		log.Fatal("You must pass in a token to validate")
+	}
+
+	var username string
+	err = db.QueryRow("SELECT username FROM magic_links WHERE token = $1", token).Scan(&username)
+
+	if username == "" {
+		return User{}
+	}
+
+	DeleteMagicLink(token)
+
+	var user User = SearchUser(User{Username: username}).User
+
+	return user
+}
