@@ -59,3 +59,21 @@ CREATE TABLE IF NOT EXISTS votes (
     FOREIGN KEY (submission_id) REFERENCES submissions(id),
     FOREIGN KEY (voter_username) REFERENCES users(username)
 );
+
+-- note: use a recursive query to build a comment chain (via self join)
+-- FK summary:
+--  author --> users(username)
+--  parent_comment --> submissions(id)
+--  in_reponse_to --> comments(id) - OPTIONAL
+CREATE TABLE IF NOT EXISTS comments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    in_response_to UUID NOT NULL,
+    content TEXT NOT NULL,
+    author VARCHAR(100) NOT NULL,
+    parent_comment UUID NULL,
+    flagged BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_author FOREIGN KEY (author) REFERENCES users(username),
+    CONSTRAINT fk_parent_comment FOREIGN KEY (parent_comment) REFERENCES comments(id),
+    CONSTRAINT fk_in_response_to FOREIGN KEY (in_response_to) REFERENCES submissions(id)
+);
