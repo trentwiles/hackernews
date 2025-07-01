@@ -29,21 +29,21 @@ type LoginRequest struct {
 }
 
 type SubmissionRequest struct {
-	Link string `json:"link"`
-	Title string `json:"title"`
-	Body string `json:"body"`
+	Link         string `json:"link"`
+	Title        string `json:"title"`
+	Body         string `json:"body"`
 	CaptchaToken string `json:"captchaToken"`
 }
 
-    // username VARCHAR(100) PRIMARY KEY,
-    // full_name VARCHAR(100),
-    // birthdate DATE,
-    // bio_text TEXT,
+// username VARCHAR(100) PRIMARY KEY,
+// full_name VARCHAR(100),
+// birthdate DATE,
+// bio_text TEXT,
 
 type BioUpdateRequest struct {
-	FullName string `json:"fullName"` // full_name
+	FullName  string `json:"fullName"`  // full_name
 	Birthdate string `json:"birthdate"` // birthdate
-	BioText string `json:"bioText"` // bio_text
+	BioText   string `json:"bioText"`   // bio_text
 }
 
 var version string = "/api/v1"
@@ -152,7 +152,7 @@ func main() {
 		return c.JSON(fiber.Map{"message": "Logged in as " + user.Username, "token": jwtToken})
 	})
 
-	app.Post(version + "/submit", func(c *fiber.Ctx) error {
+	app.Post(version+"/submit", func(c *fiber.Ctx) error {
 		var req SubmissionRequest
 
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
@@ -194,9 +194,53 @@ func main() {
 		})
 	})
 
-	// app.Post(version+"/bio", func(c *fiber.Ctx) error {
+	app.Post(version+"/bio", func(c *fiber.Ctx) error {
+		var req BioUpdateRequest
 
-	// })
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		if req.BioText == "" {
+			fmt.Println("debug note: bio text is empty")
+		}
+
+		if req.Birthdate == "" {
+			fmt.Println("debug note: birth date is empty")
+		}
+
+		if !utils.IsValidDateFormat(req.Birthdate) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Birth date fails regex. Not in American format, MM-DD-YYYY.",
+			})
+		}
+
+		if req.FullName == "" {
+			fmt.Println("debug note: full name is empty")
+		}
+
+		if len(req.FullName) > 100 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Full name cannot be longer than 100 chars",
+			})
+		}
+
+		// all validations have passed
+		var meta db.UserMetadata = db.UserMetadata{Username: username, Full_name: req.FullName, Birthdate: req.Birthdate, Bio_text: req.BioText}
+		db.UpsertUserMetadata(meta)
+
+		return c.JSON(fiber.Map{
+			"message": "Updated metadata for user " + username,
+		})
+	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "Healthy", "status": 200})

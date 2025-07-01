@@ -16,3 +16,10 @@ func IsValidURL(url string) bool {
 	regex := regexp.MustCompile(`(?i)^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$`)
 	return regex.MatchString(url)
 }
+
+func IsValidDateFormat(date string) bool {
+	regex := `^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-[0-9]{4}$`
+
+	re := regexp.MustCompile(regex)
+	return re.MatchString(date)
+}

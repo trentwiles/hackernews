@@ -82,21 +82,44 @@ func CreateUser(user User) {
     }
 }
 
-func CreateUserMetadata(metadata UserMetadata) {
-	// connection via connection function
+func UpsertUserMetadata(metadata UserMetadata) {
+	// Validate input
+	if metadata.Username == "" {
+		log.Fatal("Please provide a username")
+	}
+
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
-	// end connection via connection function
 
-	query := `INSERT INTO bio (username, full_name, birthdate, bio_text) VALUES ($1, $2, $3, $4)`
+	// Check if metadata exists for this username
+	var exists bool
+	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM bio WHERE username = $1)", metadata.Username).Scan(&exists)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    _, err = db.Exec(query, metadata.Username, metadata.Full_name, metadata.Birthdate, metadata.Bio_text)
-    if err != nil {
-        log.Fatal(err)
-    }
+	if exists {
+		// Update existing metadata
+		_, err = db.Exec(
+			"UPDATE bio SET full_name = $1, birthdate = $2, bio_text = $3 WHERE username = $4",
+			metadata.Full_name, metadata.Birthdate, metadata.Bio_text, metadata.Username,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		// Insert new metadata
+		_, err = db.Exec(
+			"INSERT INTO bio (username, full_name, birthdate, bio_text) VALUES ($1, $2, $3, $4)",
+			metadata.Username, metadata.Full_name, metadata.Birthdate, metadata.Bio_text,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func SearchUser(user User) CompleteUser {
@@ -275,24 +298,6 @@ func UpdateSubmission(stub Submission) {
 }
 
 
-func UpdateUserMetadata(metadata UserMetadata) {
-	// connection via connection function
-	db, err := Connect()
-	if err != nil {
-        log.Fatal(err)
-    }
-	defer db.Close()
-	// end connection via connection function
-
-	if metadata.Username == "" {
-		log.Fatal("Please use a username updating user metadata")
-	}
-
-	_, err = db.Exec("UPDATE bio SET full_name = $1, birthdate = $2, bio_text = $3 WHERE username = $4", metadata.Full_name, metadata.Birthdate, metadata.Bio_text, metadata.Username)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 
 // true on success (new insert or update)

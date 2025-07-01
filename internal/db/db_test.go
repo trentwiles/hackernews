@@ -21,11 +21,11 @@ func TestUserBioCreation(t *testing.T) {
     var james User = User{Username: "james", Email: "test@example.com", Registered_ip: "127.0.0.1"}
     var jamesPersonalDetails UserMetadata = UserMetadata{Username: "james", Full_name: "James Johnson", Birthdate: "02/03/2001", Bio_text: "blahblahblahblahblahblah"}
     CreateUser(james)
-    CreateUserMetadata(jamesPersonalDetails)
+    UpsertUserMetadata(jamesPersonalDetails)
     var res UserMetadata = SearchUser(james).Metadata
     assert.Equal(t, res.Full_name, "James Johnson", "metadata full name")
     jamesPersonalDetails.Bio_text = "this is my new bio"
-    UpdateUserMetadata(jamesPersonalDetails)
+    UpsertUserMetadata(jamesPersonalDetails)
     res = SearchUser(james).Metadata
     assert.Equal(t, res.Bio_text, "this is my new bio", "metadata test bio update")
     DeleteUser(james)
