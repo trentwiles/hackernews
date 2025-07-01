@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -47,8 +48,8 @@ type BioUpdateRequest struct {
 }
 
 type VoteRequest struct {
-	Id string `json:"id"`
-	Upvote bool `json:"upvote"`
+	Id     string `json:"id"`
+	Upvote bool   `json:"upvote"`
 }
 
 var version string = "/api/v1"
@@ -247,7 +248,7 @@ func main() {
 		})
 	})
 
-	app.Post(version + "/vote", func(c *fiber.Ctx) error {
+	app.Post(version+"/vote", func(c *fiber.Ctx) error {
 		var req VoteRequest
 
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
@@ -268,7 +269,6 @@ func main() {
 			})
 		}
 
-
 		// all parameters have been validated
 
 		var voteSuccess bool
@@ -276,7 +276,42 @@ func main() {
 
 		// for now just return if the vote went through or not (false = trued to doublevote)
 		// future return the count of votes
-		return c.JSON(fiber.Map{"id": req.Id, "upvoteSuccess": voteSuccess})
+		return c.JSON(fiber.Map{"id": req.Id, "voteSuccess": voteSuccess})
+	})
+
+	// aka get the metadata and votes on a post
+	app.Get(version+"/submission", func(c *fiber.Ctx) error {
+		id := c.Query("id")
+		if id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please pass an id parameter"})
+		}
+
+		if id == "" {
+			return c.JSON(fiber.Map{"message": "Please pass an id parameter"})
+		}
+
+		var queriedSubmission db.Submission = db.SearchSubmission(db.Submission{Id: id})
+
+		votes, err := db.CountVotes(db.Submission{Id: id})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.JSON(fiber.Map{
+			"id": queriedSubmission.Id,
+			"metdata": fiber.Map{
+				"title": queriedSubmission.Title,
+				"link": queriedSubmission.Link,
+				"body": queriedSubmission.Body,
+				"author": queriedSubmission.Username,
+				"isFlagged": queriedSubmission.Flagged,
+			},
+			"votes": fiber.Map{
+				"upvotes": votes.Upvotes,
+				"downvotes": votes.Downvotes,
+				"total": votes.Upvotes - votes.Downvotes,
+			},
+		})
 	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {

@@ -39,6 +39,11 @@ type Submission struct {
     Flagged bool
 }
 
+type VoteMetrics struct {
+	Upvotes int
+	Downvotes int
+}
+
 // enum equiv in Go for audit log events
 // ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email')
 type AuditEvent string
@@ -443,4 +448,32 @@ func ValidateMagicLink(token string, ip string) User {
 	CreateUser(toInsert)
 
 	return toInsert
+}
+
+func CountVotes(post Submission) (VoteMetrics, error) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer db.Close()
+	// end connection via connection function
+
+	if post.Id == "" {
+		return VoteMetrics{}, fmt.Errorf("cannot query votes with a blank submission ID")
+	}
+
+	var upvotes int
+	var downvotes int
+	err = db.QueryRow("SELECT count(*) as ct FROM votes WHERE submission_id = $1 AND positive = $2", post.Id, true).Scan(&upvotes)
+	if err != nil {
+		return VoteMetrics{}, fmt.Errorf("error from SQL: %s", err)
+	}
+
+	err = db.QueryRow("SELECT count(*) as ct FROM votes WHERE submission_id = $1 AND positive = $2", post.Id, false).Scan(&downvotes)
+	if err != nil {
+		return VoteMetrics{}, fmt.Errorf("error from SQL: %s", err)
+	}
+
+	return VoteMetrics{Upvotes: upvotes, Downvotes: downvotes}, nil
 }
