@@ -23,3 +23,11 @@ func IsValidDateFormat(date string) bool {
 	re := regexp.MustCompile(regex)
 	return re.MatchString(date)
 }
+
+func IsValidUsername(username string) bool {
+	regex := `^[a-zA-Z0-9_]+$`
+
+
+	re := regexp.MustCompile(regex)
+	return re.MatchString(username)
+}

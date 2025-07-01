@@ -212,6 +212,7 @@ func DeleteUser(user User) {
 	// additional note: user bios are cascading, so Postgres will delete them automatically
 }
 
+// validation for the correct user is done in the API business logic
 func DeleteSubmission(submission Submission) {
 	// connection via connection function
 	db, err := Connect()

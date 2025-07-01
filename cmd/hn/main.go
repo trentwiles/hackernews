@@ -36,6 +36,10 @@ type SubmissionRequest struct {
 	CaptchaToken string `json:"captchaToken"`
 }
 
+type SubmissionDeleteRequest struct {
+	Id string `json:"id"`
+}
+
 // username VARCHAR(100) PRIMARY KEY,
 // full_name VARCHAR(100),
 // birthdate DATE,
@@ -107,6 +111,15 @@ func main() {
 		if len(req.Username) > 100 {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Invalid username (over 100 chars)",
+			})
+		}
+
+		// does username pass filter?
+		// has only letters, underscores, and numbers
+		// future: doesn't contain slurs/other forbidden words
+		if !utils.IsValidUsername(req.Username) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid username (must contain only letters, numbers, and underscores)",
 			})
 		}
 
@@ -270,9 +283,7 @@ func main() {
 		}
 
 		// all parameters have been validated
-
-		var voteSuccess bool
-		voteSuccess = db.Vote(db.User{Username: username}, db.Submission{Id: req.Id}, req.Upvote)
+		var voteSuccess bool = db.Vote(db.User{Username: username}, db.Submission{Id: req.Id}, req.Upvote)
 
 		// for now just return if the vote went through or not (false = trued to doublevote)
 		// future return the count of votes
@@ -300,17 +311,106 @@ func main() {
 		return c.JSON(fiber.Map{
 			"id": queriedSubmission.Id,
 			"metdata": fiber.Map{
-				"title": queriedSubmission.Title,
-				"link": queriedSubmission.Link,
-				"body": queriedSubmission.Body,
-				"author": queriedSubmission.Username,
+				"title":     queriedSubmission.Title,
+				"link":      queriedSubmission.Link,
+				"body":      queriedSubmission.Body,
+				"author":    queriedSubmission.Username,
 				"isFlagged": queriedSubmission.Flagged,
 			},
 			"votes": fiber.Map{
-				"upvotes": votes.Upvotes,
+				"upvotes":   votes.Upvotes,
 				"downvotes": votes.Downvotes,
-				"total": votes.Upvotes - votes.Downvotes,
+				"total":     votes.Upvotes - votes.Downvotes,
 			},
+		})
+	})
+
+	app.Get(version+"/user", func(c *fiber.Ctx) error {
+		username := c.Query("username")
+		if username == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Please pass a username parameter",
+			})
+		}
+
+		var user db.User
+		var userMetadata db.UserMetadata
+
+		complete := db.SearchUser(db.User{Username: username})
+
+		user = complete.User
+		userMetadata = complete.Metadata
+
+		return c.JSON(fiber.Map{
+			"username": user.Username,
+			"joined":   user.Created_at,
+			"metadata": fiber.Map{
+				"full_name": userMetadata.Full_name,
+				"birthday":  userMetadata.Birthdate,
+				"bio":       userMetadata.Bio_text,
+			},
+		})
+	})
+
+	// shorthand for /api/v1/user?username=<authenticated_user>
+	app.Get(version + "/me", func(c *fiber.Ctx) error {
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		return c.Redirect(version + "/user?username=" + username)
+	})
+
+	app.Delete(version + "/submission", func(c *fiber.Ctx) error {
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		var req SubmissionDeleteRequest
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		if req.Id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "must pass a valid id parameter",
+			})
+		}
+
+		// first check if submission matches the requested username
+		query := db.SearchSubmission(db.Submission{Id: req.Id})
+
+		if query.Id == "" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "No such submission (has it already been deleted?)",
+			})
+		}
+
+		if query.Username != username {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "You do not own this post, and therefore cannot delete it",
+			})
+		}
+
+		// prevent a flagged post from being deleted (can't let people destroy the evidence!)
+		if query.Flagged {
+			return c.Status(fiber.StatusLocked).JSON(fiber.Map{
+				"error": "This post is currently under review, and cannot be deleted during this process",
+			})
+		}
+
+		fmt.Printf("debug - deleted a post with id %s by user %s", req.Id, username)
+		db.DeleteSubmission(query)
+
+		return c.JSON(fiber.Map{
+			"message": "OK",
 		})
 	})
 
@@ -320,8 +420,8 @@ func main() {
 
 	// 404
 	app.Use(func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "not found", "status": 404})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Route not found", "status": 404})
 	})
 
-	app.Listen("127.0.0.1:3000") //ok
+	app.Listen("127.0.0.1:3000")
 }
