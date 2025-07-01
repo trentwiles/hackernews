@@ -46,6 +46,11 @@ type BioUpdateRequest struct {
 	BioText   string `json:"bioText"`   // bio_text
 }
 
+type VoteRequest struct {
+	Id string `json:"id"`
+	Upvote bool `json:"upvote"`
+}
+
 var version string = "/api/v1"
 
 func main() {
@@ -240,6 +245,38 @@ func main() {
 		return c.JSON(fiber.Map{
 			"message": "Updated metadata for user " + username,
 		})
+	})
+
+	app.Post(version + "/vote", func(c *fiber.Ctx) error {
+		var req VoteRequest
+
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		if req.Id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "missing valid id parameter",
+			})
+		}
+
+
+		// all parameters have been validated
+
+		var voteSuccess bool
+		voteSuccess = db.Vote(db.User{Username: username}, db.Submission{Id: req.Id}, req.Upvote)
+
+		// for now just return if the vote went through or not (false = trued to doublevote)
+		// future return the count of votes
+		return c.JSON(fiber.Map{"id": req.Id, "upvoteSuccess": voteSuccess})
 	})
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
