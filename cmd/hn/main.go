@@ -11,6 +11,7 @@ import (
 	"github.com/trentwiles/hackernews/internal/db"
 	"github.com/trentwiles/hackernews/internal/email"
 	"github.com/trentwiles/hackernews/internal/jwt"
+	"github.com/trentwiles/hackernews/internal/utils"
 
 	_ "github.com/lib/pq"
 )
@@ -32,6 +33,17 @@ type SubmissionRequest struct {
 	Title string `json:"title"`
 	Body string `json:"body"`
 	CaptchaToken string `json:"captchaToken"`
+}
+
+    // username VARCHAR(100) PRIMARY KEY,
+    // full_name VARCHAR(100),
+    // birthdate DATE,
+    // bio_text TEXT,
+
+type BioUpdateRequest struct {
+	FullName string `json:"fullName"` // full_name
+	Birthdate string `json:"birthdate"` // birthdate
+	BioText string `json:"bioText"` // bio_text
 }
 
 var version string = "/api/v1"
@@ -73,7 +85,7 @@ func main() {
 		}
 
 		// is the email address even valid?
-		if !IsValidEmail(req.Email) {
+		if !utils.IsValidEmail(req.Email) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Invalid email (failed regex)",
 			})
@@ -162,7 +174,7 @@ func main() {
 		}
 
 		// is the link valid (passes regex and length restriction?)
-		if !IsValidURL(req.Link) {
+		if !utils.IsValidURL(req.Link) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Invalid URL (failed regex)",
 			})
@@ -182,9 +194,9 @@ func main() {
 		})
 	})
 
-	app.Post(version+"/bio", func(c *fiber.Ctx) error {
+	// app.Post(version+"/bio", func(c *fiber.Ctx) error {
 
-	})
+	// })
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "Healthy", "status": 200})

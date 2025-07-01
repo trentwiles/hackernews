@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/trentwiles/hackernews/internal/config"
 )
@@ -21,12 +22,8 @@ type RecaptchaResponse struct {
 }
 
 func ValidateToken(token string) bool {
-	config.LoadEnv()
-	var endpoint string = "https://www.google.com/recaptcha/api/siteverify"
-
 	// for user privacy I don't pass the request IP address back to Google
-	resp, err := http.PostForm(endpoint,
-		url.Values{"secret": {config.GetEnv("GOOGLE_SECRET_KEY")}, "response": {token}})
+	resp, err := sendCaptchaToken(token)
 
 	if err != nil {
 		log.Fatal(err)
@@ -55,4 +52,28 @@ func ValidateToken(token string) bool {
 	}
 
 	return result.Score >= cutoff
+}
+
+
+func sendCaptchaToken(token string) (*http.Response, error) {
+	config.LoadEnv()
+
+	endpoint := "https://www.google.com/recaptcha/api/siteverify"
+	data := url.Values{
+		"secret":   {config.GetEnv("GOOGLE_SECRET_KEY")},
+		"response": {token},
+	}
+
+	req, err := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	return resp, err
 }
