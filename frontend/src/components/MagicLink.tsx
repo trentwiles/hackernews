@@ -52,6 +52,7 @@ export default function MagicLink(props: MagicLinkProps) {
 
         document.cookie = `token=${token}; path=/; max-age=3600`;
         setIsError(false)
+        setCanConfirm(true)
       })
       .catch((error) => {
         // Handle errors

@@ -166,7 +166,11 @@ func main() {
 		}
 
 		var jwtToken string
-		jwtToken, _ = jwt.GenerateJWT(user.Username, 60)
+		jwtToken, err := jwt.GenerateJWT(user.Username, 60)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		return c.JSON(fiber.Map{"username": user.Username, "token": jwtToken})
 	})

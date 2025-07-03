@@ -431,8 +431,6 @@ func ValidateMagicLink(token string, ip string) User {
 		fmt.Printf("No user found for token: %s\n", token)
 		// Empty user = invalid token
 		return User{}
-	} else {
-		log.Fatal(err)
 	}
 
 	if username == "" {
@@ -443,12 +441,24 @@ func ValidateMagicLink(token string, ip string) User {
 		log.Fatal("Registration IP address required")
 	}
 
+	fmt.Println("About to delete magic link")
 	DeleteMagicLink(token)
+	fmt.Println("Deleted magic link")
 
-	var toInsert User = User{Username: username, Email: email, Registered_ip: ip}
-	CreateUser(toInsert)
+	fmt.Println("Checking if we need to insert a new user into the database")
 
-	return toInsert
+	// determine if we need to insert the user into the database or not
+	var searchedUser User = SearchUser(User{Username: username}).User
+
+	if searchedUser.Username == "" {
+		var toInsert User = User{Username: username, Email: email, Registered_ip: ip}
+		CreateUser(toInsert)
+		fmt.Println("Inserted new user into the database")
+		return toInsert
+	}else{
+		return searchedUser
+	}
+	
 }
 
 func CountVotes(post Submission) (VoteMetrics, error) {
