@@ -367,7 +367,7 @@ func main() {
 			selection = db.AllSubmissions(db.Oldest, offsetInt)
 		default:
 			fmt.Println("default placeholder")
-			return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": true,
 				"message": "invalid sort filter",
 			})
