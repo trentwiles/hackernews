@@ -21,7 +21,6 @@ export default function MagicLink(props: MagicLinkProps) {
   const [canConfirm, setCanConfirm] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [goto, setGoto] = useState("")
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,9 +29,10 @@ export default function MagicLink(props: MagicLinkProps) {
   const token = searchParams.get("token"); // "123123"
 
   useEffect(() => {
-    if (!token || token == "") {
+    if (!token || token == "" || token == null) {
       setIsError(true);
-      setErrorMessage("Invalid Magic Link");
+      setErrorMessage("No Token Provided");
+      return
     }
 
     fetch("http://localhost:3000/api/v1/magic?token=" + token)
@@ -47,8 +47,11 @@ export default function MagicLink(props: MagicLinkProps) {
       .then((data) => {
         // if we have made it to this point, we know there has been a 200 OK
         // which means there will be a valid token!
+        const token = data.token
+        setUsername(data.username)
+
+        document.cookie = `token=${token}; path=/; max-age=3600`;
         setIsError(false)
-        setGoto("/")
       })
       .catch((error) => {
         // Handle errors
@@ -83,7 +86,7 @@ export default function MagicLink(props: MagicLinkProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled={!canConfirm} onClick={() => navigate('/' + goto)}>
+              <Button className="w-full" disabled={!canConfirm} onClick={() => navigate('/')}>
                 Continue
               </Button>
             </CardContent>
