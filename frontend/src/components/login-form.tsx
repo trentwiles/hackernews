@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +24,8 @@ export function LoginForm({
   const [email, setEmail] = useState<string>();
   const [canSubmit, setCanSubmit] = useState<boolean>(true);
   const [loginText, setLoginText] = useState<string>(DEFAULT_LOGIN_TEXT);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // prevent page reload
@@ -65,6 +68,9 @@ export function LoginForm({
       .then((data) => {
         console.log(data);
         setCanSubmit(true)
+
+        navigate('/login-thanks?email=' + email);
+        return
       })
       .catch((error) => {
         console.log(error);

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import Login from "./components/Login";
+import LoginThanks from "./components/LoginThanks";
 import MagicLink from "./components/MagicLink";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
@@ -13,6 +14,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login serviceName="HackerNews" />} />
             <Route path="/magic" element={<MagicLink serviceName="HackerNews" />} />
+            <Route path="/login-thanks" element={<LoginThanks />} />
           </Routes>
         </div>
       </Router>
