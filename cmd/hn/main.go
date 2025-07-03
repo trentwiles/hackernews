@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -336,18 +337,46 @@ func main() {
 			sortType = "latest"
 		}
 
+		offset := c.Query("offset")
+		if offset == "" {
+			offset = "0"
+		}
+
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": true,
+				"message": "error parsing 'offset', " + err.Error(),
+			})
+		}
+
+
+		var selection []db.Submission
+
 		switch sortType {
 		case "latest":
 			// ORDER BY created_time DESC
 			fmt.Println("Latest placeholder")
+			selection = db.AllSubmissions(db.Latest, offsetInt)
 		case "best":
 			// some sort of advanced SQL command to calculate all upvotes
 			fmt.Println("Best placeholder")
+			selection = db.AllSubmissions(db.Best, offsetInt)
 		case "oldest":
 			// ORDER BY created_time ASC
+			selection = db.AllSubmissions(db.Oldest, offsetInt)
 		default:
 			fmt.Println("default placeholder")
+			return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+				"error": true,
+				"message": "invalid sort filter",
+			})
 		}
+
+		return c.JSON(fiber.Map{
+			"results": selection,
+			"next": version + "/all?sort=" + sortType + "&offset=" + strconv.Itoa(offsetInt + 10),
+		})
 
 
 	})

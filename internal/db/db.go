@@ -14,36 +14,36 @@ const DEFAULT_SELECT_LIMIT = 10
 
 // Go representations of database objects
 type User struct {
-	Username string
-	Email string
-	Created_at string
+	Username      string
+	Email         string
+	Created_at    string
 	Registered_ip string
 }
 
 type UserMetadata struct {
-	Username string
+	Username  string
 	Full_name string
-    Birthdate string
-    Bio_text string
+	Birthdate string
+	Bio_text  string
 }
 
 type CompleteUser struct {
-	User User
+	User     User
 	Metadata UserMetadata
 }
 
 type Submission struct {
-	Id string
-	Title string
-    Username string
-    Link string
-    Body string
-    Flagged bool
+	Id         string
+	Title      string
+	Username   string
+	Link       string
+	Body       string
+	Flagged    bool
 	Created_at string
 }
 
 type VoteMetrics struct {
-	Upvotes int
+	Upvotes   int
 	Downvotes int
 }
 
@@ -52,13 +52,13 @@ type VoteMetrics struct {
 type AuditEvent string
 
 const (
-	Login  AuditEvent = "login"
-	Logout   AuditEvent = "logout"
-	FailedLogin  AuditEvent = "failed_login"
-	Post AuditEvent = "post"
-	Comment AuditEvent = "comment"
-	PostClick AuditEvent = "post_click"
-	SentEmail AuditEvent = "sent_email"
+	Login       AuditEvent = "login"
+	Logout      AuditEvent = "logout"
+	FailedLogin AuditEvent = "failed_login"
+	Post        AuditEvent = "post"
+	Comment     AuditEvent = "comment"
+	PostClick   AuditEvent = "post_click"
+	SentEmail   AuditEvent = "sent_email"
 )
 
 type SortMethod string
@@ -66,13 +66,13 @@ type SortMethod string
 const (
 	Latest SortMethod = "latest"
 	Oldest SortMethod = "oldest"
-	Best SortMethod = "best"
+	Best   SortMethod = "best"
 )
 
 func Connect() (*sql.DB, error) {
 	config.LoadEnv()
 	// connect to postgres
-	connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable", config.GetEnv("POSTGRES_USERNAME"), config.GetEnv("POSTGRES_PASSWORD"), config.GetEnv("POSTGRES_DB"))	
+	connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable", config.GetEnv("POSTGRES_USERNAME"), config.GetEnv("POSTGRES_PASSWORD"), config.GetEnv("POSTGRES_DB"))
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
@@ -85,17 +85,17 @@ func CreateUser(user User) {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
 	query := `INSERT INTO users (username, email, registered_ip) VALUES ($1, $2, $3)`
 
-    _, err = db.Exec(query, user.Username, user.Email, user.Registered_ip)
-    if err != nil {
-        log.Fatal(err)
-    }
+	_, err = db.Exec(query, user.Username, user.Email, user.Registered_ip)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func UpsertUserMetadata(metadata UserMetadata) {
@@ -142,19 +142,19 @@ func SearchUser(user User) CompleteUser {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
 	// two cases: search by username and search by email
-	if (user.Email == "" && user.Username == "") {
+	if user.Email == "" && user.Username == "" {
 		log.Fatal("To select a user, you must be either an email or username")
 	}
 
 	var rows *sql.Rows
-	
-	if (user.Username != "") {
+
+	if user.Username != "" {
 		rows, err = db.Query("SELECT * FROM users WHERE username = $1", user.Username)
 		if err != nil {
 			log.Fatal(err)
@@ -168,19 +168,19 @@ func SearchUser(user User) CompleteUser {
 
 	var tempUser = User{}
 	for rows.Next() {
-        err := rows.Scan(&tempUser.Username, &tempUser.Email, &tempUser.Created_at, &tempUser.Registered_ip)
-        if err != nil {
-            log.Fatal(err)
-        }
-    }
+		err := rows.Scan(&tempUser.Username, &tempUser.Email, &tempUser.Created_at, &tempUser.Registered_ip)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	// now that we've got the user themselves, let's grab their metadata
 	var tempMetadata = UserMetadata{}
 	if tempUser.Username != "" {
 		rows, err = db.Query("SELECT * FROM bio WHERE username = $1", tempUser.Username)
 		if err != nil {
-            log.Fatal(err)
-        }
+			log.Fatal(err)
+		}
 
 		for rows.Next() {
 			err := rows.Scan(&tempMetadata.Username, &tempMetadata.Full_name, &tempMetadata.Birthdate, &tempMetadata.Bio_text)
@@ -197,18 +197,17 @@ func DeleteUser(user User) {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
 	// two cases: search by username and search by email
-	if (user.Email == "" && user.Username == "") {
+	if user.Email == "" && user.Username == "" {
 		log.Fatal("To delete a user, you must be either an email or username")
 	}
 
-	
-	if (user.Username != "") {
+	if user.Username != "" {
 		_, err = db.Exec("DELETE FROM users WHERE username = $1", user.Username)
 		if err != nil {
 			log.Fatal(err)
@@ -228,8 +227,8 @@ func DeleteSubmission(submission Submission) {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -247,8 +246,8 @@ func SearchSubmission(stub Submission) Submission {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -295,9 +294,9 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 	query := `
 		SELECT id, username, title, link, body, created_at
 		FROM submissions
-        ` + order + `
 		WHERE flagged = false
-        LIMIT $1 OFFSET $2
+		` + order + `
+		LIMIT $1 OFFSET $2
 	`
 
 	rows, err := db.Query(query, DEFAULT_SELECT_LIMIT, offset)
@@ -310,10 +309,17 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 
 	var submissions []Submission
 	for rows.Next() {
+		var tempBody sql.NullString
 		var current Submission
 
-		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &current.Body, &current.Created_at); err != nil {
+		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &tempBody, &current.Created_at); err != nil {
 			log.Fatal(err)
+		}
+
+		if tempBody.Valid {
+			current.Body = tempBody.String
+		} else {
+			current.Body = ""
 		}
 
 		submissions = append(submissions, current)
@@ -348,8 +354,8 @@ func UpdateSubmission(stub Submission) {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -363,17 +369,14 @@ func UpdateSubmission(stub Submission) {
 	}
 }
 
-
-
-
 // true on success (new insert or update)
 // false on failure (attempting to "double vote")
 func Vote(user User, submission Submission, isUpvote bool) bool {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -405,7 +408,7 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 
 	// if we hit this point, a record was found, and now we just need to update it
 	// "can't vote twice"
-	if (isUpvote == wasPositive) {
+	if isUpvote == wasPositive {
 		return false
 	}
 
@@ -421,8 +424,8 @@ func CreateMagicLink(user User) string {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -442,11 +445,11 @@ func CreateMagicLink(user User) string {
 			INSERT INTO magic_links (username, email, token)
 			VALUES ($1, $2, $3)
 		`
-	
+
 	_, err = db.Exec(query, user.Username, user.Email, token)
-    if err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return token
 }
@@ -455,8 +458,8 @@ func DeleteMagicLink(token string) {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -470,8 +473,8 @@ func ValidateMagicLink(token string, ip string) User {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
@@ -483,7 +486,6 @@ func ValidateMagicLink(token string, ip string) User {
 	var email string
 
 	err = db.QueryRow("SELECT username, email FROM magic_links WHERE token = $1", token).Scan(&username, &email)
-
 
 	fmt.Printf("Database search found user %s and email %s for token %s\n", username, email, token)
 
@@ -515,18 +517,18 @@ func ValidateMagicLink(token string, ip string) User {
 		CreateUser(toInsert)
 		fmt.Println("Inserted new user into the database")
 		return toInsert
-	}else{
+	} else {
 		return searchedUser
 	}
-	
+
 }
 
 func CountVotes(post Submission) (VoteMetrics, error) {
 	// connection via connection function
 	db, err := Connect()
 	if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	defer db.Close()
 	// end connection via connection function
 
