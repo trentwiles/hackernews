@@ -168,7 +168,7 @@ func main() {
 		var jwtToken string
 		jwtToken, _ = jwt.GenerateJWT(user.Username, 60)
 
-		return c.JSON(fiber.Map{"message": "Logged in as " + user.Username, "token": jwtToken})
+		return c.JSON(fiber.Map{"username": user.Username, "token": jwtToken})
 	})
 
 	app.Post(version+"/submit", func(c *fiber.Ctx) error {

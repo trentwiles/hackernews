@@ -88,7 +88,7 @@ Validate magic link token and return JWT for authentication.
 ### Sample Response
 ```json
 {
-  "message": "Logged in as john_doe",
+  "username": "john_doe",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
