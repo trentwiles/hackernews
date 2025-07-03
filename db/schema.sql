@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     link VARCHAR(255) NOT NULL,
     body TEXT, -- optional body text (when you visit a submission page on HN, sometimes there will be additonal text)
     flagged BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (username) REFERENCES users(username) -- notice the lack of cascade
 );
 

@@ -10,6 +10,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const DEFAULT_SELECT_LIMIT = 10
+
 // Go representations of database objects
 type User struct {
 	Username string
@@ -37,6 +39,7 @@ type Submission struct {
     Link string
     Body string
     Flagged bool
+	Created_at string
 }
 
 type VoteMetrics struct {
@@ -56,6 +59,14 @@ const (
 	Comment AuditEvent = "comment"
 	PostClick AuditEvent = "post_click"
 	SentEmail AuditEvent = "sent_email"
+)
+
+type SortMethod string
+
+const (
+	Latest SortMethod = "latest"
+	Oldest SortMethod = "oldest"
+	Best SortMethod = "best"
 )
 
 func Connect() (*sql.DB, error) {
@@ -251,7 +262,7 @@ func SearchSubmission(stub Submission) Submission {
 	}
 
 	for rows.Next() {
-		err := rows.Scan(&stub.Id, &stub.Username, &stub.Title, &stub.Link, &stub.Body, &stub.Flagged)
+		err := rows.Scan(&stub.Id, &stub.Username, &stub.Title, &stub.Link, &stub.Body, &stub.Flagged, &stub.Created_at)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -260,6 +271,55 @@ func SearchSubmission(stub Submission) Submission {
 	}
 
 	return Submission{}
+}
+
+func AllSubmissions(sort SortMethod, offset int) []Submission {
+	db, err := Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// determine how to do the sorting itself
+	var order string
+	switch sort {
+	case Latest:
+		order = "ORDER BY created_at DESC"
+	case Oldest:
+		order = "ORDER BY created_at ASC"
+	case Best:
+		fmt.Println("WARNING: BEST SELECT WAS USED!!! this has not been implemented, either don't use it or implement it")
+		order = ""
+	}
+
+	query := `
+		SELECT id, username, title, link, body, created_at
+		FROM submissions
+        ` + order + `
+		WHERE flagged = false
+        LIMIT $1 OFFSET $2
+	`
+
+	rows, err := db.Query(query, DEFAULT_SELECT_LIMIT, offset)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	var submissions []Submission
+	for rows.Next() {
+		var current Submission
+
+		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &current.Body, &current.Created_at); err != nil {
+			log.Fatal(err)
+		}
+
+		submissions = append(submissions, current)
+	}
+
+	return submissions
 }
 
 func CreateSubmission(submission Submission) string {

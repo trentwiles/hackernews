@@ -329,6 +329,29 @@ func main() {
 		})
 	})
 
+	// grab all the submissions to display on the front page
+	app.Get(version+"/all", func(c *fiber.Ctx) error {
+		sortType := c.Query("sort")
+		if sortType == "" {
+			sortType = "latest"
+		}
+
+		switch sortType {
+		case "latest":
+			// ORDER BY created_time DESC
+			fmt.Println("Latest placeholder")
+		case "best":
+			// some sort of advanced SQL command to calculate all upvotes
+			fmt.Println("Best placeholder")
+		case "oldest":
+			// ORDER BY created_time ASC
+		default:
+			fmt.Println("default placeholder")
+		}
+
+
+	})
+
 	app.Get(version+"/user", func(c *fiber.Ctx) error {
 		username := c.Query("username")
 		if username == "" {
@@ -357,7 +380,7 @@ func main() {
 	})
 
 	// shorthand for /api/v1/user?username=<authenticated_user>
-	app.Get(version + "/me", func(c *fiber.Ctx) error {
+	app.Get(version+"/me", func(c *fiber.Ctx) error {
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
 
 		if !success {
@@ -367,7 +390,7 @@ func main() {
 		return c.Redirect(version + "/user?username=" + username)
 	})
 
-	app.Delete(version + "/submission", func(c *fiber.Ctx) error {
+	app.Delete(version+"/submission", func(c *fiber.Ctx) error {
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
 
 		if !success {

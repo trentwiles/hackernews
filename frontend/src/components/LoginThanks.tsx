@@ -8,11 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-type MagicLinkProps = {
-  serviceName: string;
-};
-
-export default function LoginThanks(props: MagicLinkProps) {
+export default function LoginThanks() {
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
@@ -29,7 +25,6 @@ export default function LoginThanks(props: MagicLinkProps) {
           <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
             <GalleryVerticalEnd className="size-4" />
           </div>
-          {props.serviceName}
         </a>
 
         <div className="flex flex-col gap-6">

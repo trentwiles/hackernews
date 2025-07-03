@@ -43,7 +43,7 @@ func ValidateToken(token string) bool {
 		log.Fatal("\n\nGoogle captcha API request failed, see message(s) above.")
 	}
 
-	fmt.Printf("Debug: Google Captcha Response was a success. Score for action %s was a %.1f/1.0", result.Action, result.Score)
+	fmt.Printf("Debug: Google Captcha Response was a success. Score for action %s was a %.1f/1.0\n", result.Action, result.Score)
 	
 	// Is the score provided by google higher or lower than the cutoff?
 	cutoff, err := strconv.ParseFloat(config.GetEnv("GOOGLE_CUTOFF"), 64)
