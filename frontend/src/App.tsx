@@ -4,6 +4,8 @@ import Home from "./components/Home";
 import LoginThanks from "./components/LoginThanks";
 import MagicLink from "./components/MagicLink";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+import Submit from "./components/Submit";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
   return (
@@ -14,15 +16,21 @@ function App() {
             {/* PUBLIC ROUTES */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login serviceName="HackerNews" />} />
-            <Route path="/magic" element={<MagicLink serviceName="HackerNews" />} />
+            <Route
+              path="/magic"
+              element={<MagicLink serviceName="HackerNews" />}
+            />
             <Route path="/login-thanks" element={<LoginThanks />} />
 
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}
-            {/* <Route path="/submit" element={
-              <ProtectedRoute>
-                <Submit />
-              </ProtectedRoute>
-            } /> */}
+            <Route
+              path="/submit"
+              element={
+                <ProtectedRoute>
+                  <Submit />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>

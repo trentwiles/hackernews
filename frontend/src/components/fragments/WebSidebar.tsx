@@ -1,6 +1,6 @@
 "use client";
 import Cookies from "js-cookie";
-import { ChefHat, CirclePlus, Command, ListFilterPlus, LogIn, Trophy } from "lucide-react";
+import { ChefHat, CirclePlus, Command, FileStack, ListFilterPlus, LogIn, Trophy } from "lucide-react";
 import {
   Sidebar,
   SidebarGroup,
@@ -116,6 +116,16 @@ export default function WebSidebar() {
                   <Link to="/submit">
                     <CirclePlus />
                     <span>New Submission</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* MY SUBMISSIONS BUTTON */}
+              <SidebarMenuItem key={"my"}>
+                <SidebarMenuButton asChild>
+                  <Link to="/account/submissions">
+                    <FileStack />
+                    <span>My Submissions</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

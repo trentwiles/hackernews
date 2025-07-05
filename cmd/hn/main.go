@@ -399,6 +399,7 @@ func main() {
 
 		return c.JSON(fiber.Map{
 			"username": user.Username,
+			"email": user.Email,
 			"joined":   user.Created_at,
 			"metadata": fiber.Map{
 				"full_name": userMetadata.Full_name,

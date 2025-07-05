@@ -86,7 +86,7 @@ export default function NavUser(props: props) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link to="/settings">
+              <Link to="/account/settings">
                 <DropdownMenuItem>
                   <BadgeCheck />
                   Account
