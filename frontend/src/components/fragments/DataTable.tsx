@@ -1,7 +1,6 @@
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableFooter,
   TableHead,
@@ -9,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -34,6 +34,17 @@ function truncate(
   return str.slice(0, maxLength - suffix.length) + suffix;
 }
 
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function buildNextFetch(filter: string, offset: number): string {
   return `/api/v1/all?sort=${filter}&offset=${offset}`;
 }
@@ -41,9 +52,8 @@ function buildNextFetch(filter: string, offset: number): string {
 export default function DataTable() {
   const [submission, setSubmission] = useState<Submission[]>([]);
 
-  // use both of these states to build the URL to fetch from: /api/v1/all?sort=<FILTER>&offset=<OFFSET>
-  const [filter, setFilter] = useState<string>("latest");
-  const [offset, setOffset] = useState<number>(0); // Start at 0
+  const [filter/*, setFilter */] = useState<string>("latest");
+  const [offset, setOffset] = useState<number>(0);
 
   const [isPending, setIsPending] = useState<boolean>(true);
   const [isError, setIsError] = useState<boolean>(false);
@@ -69,52 +79,96 @@ export default function DataTable() {
         setIsError(true);
         setIsPending(false);
       });
-  }, [offset, filter]); // Also depend on filter in case you add filter controls later
+  }, [offset, filter]);
 
   return (
-    <div>
-      {!isPending && !isError && (
-        <Table>
-          <TableHeader>
-            <p className="text-lg">HackerNews</p>
-            <p className="text-base text-muted-foreground">
-              {new Date().toLocaleString("en-US", {
-                month: "2-digit",
-                day: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </p>
-          </TableHeader>
-          <TableBody>
-            {submission.map((s) => (
+    <div className="w-full p-6 max-w-6xl mx-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead colSpan={4} className="h-auto">
+              <div className="py-2">
+                <p className="text-lg font-semibold">HackerNews</p>
+                <p className="text-sm text-muted-foreground">
+                  {new Date().toLocaleString("en-US", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </p>
+              </div>
+            </TableHead>
+          </TableRow>
+          <TableRow>
+            <TableHead className="w-[30%]">Title</TableHead>
+            <TableHead className="w-[40%]">Preview</TableHead>
+            <TableHead className="w-[15%]">User</TableHead>
+            <TableHead className="w-[15%] text-right">Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isPending ? (
+            Array.from({ length: 10 }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                <TableCell className="font-medium py-4">
+                  <Skeleton className="h-5 w-[250px]" />
+                </TableCell>
+                <TableCell className="py-4">
+                  <Skeleton className="h-5 w-[350px]" />
+                </TableCell>
+                <TableCell className="py-4">
+                  <Skeleton className="h-5 w-[100px]" />
+                </TableCell>
+                <TableCell className="text-right py-4">
+                  <Skeleton className="h-5 w-[120px] ml-auto" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : isError ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center text-muted-foreground">
+                Error loading data. Please try again.
+              </TableCell>
+            </TableRow>
+          ) : submission.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center text-muted-foreground">
+                No submissions found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            submission.map((s) => (
               <TableRow key={s.Id}>
-                <TableCell className="font-medium">
-                  <a href={s.Link} target="_blank">
+                <TableCell className="font-medium py-4">
+                  <a href={s.Link} target="_blank" className="hover:underline">
                     {truncate(s.Title)}
                   </a>
                 </TableCell>
-                <TableCell>
-                  <Link to={"/submission/" + s.Id}>
-                    {" "}
+                <TableCell className="py-4">
+                  <Link to={"/submission/" + s.Id} className="text-muted-foreground hover:text-foreground">
                     {truncate(s.Body, 60)}
                   </Link>
                 </TableCell>
-                <TableCell>
-                  <Link to={"/u/" + s.Username}>{s.Username}</Link>
+                <TableCell className="py-4">
+                  <Link to={"/u/" + s.Username} className="hover:underline">
+                    {s.Username}
+                  </Link>
                 </TableCell>
-                <TableCell className="text-right">{s.Created_at}</TableCell>
+                <TableCell className="text-right py-4">{formatDate(s.Created_at)}</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow key={"end"}>
-              <TableCell>
+            ))
+          )}
+        </TableBody>
+        <TableFooter>
+          <TableRow key={"end"}>
+            <TableCell colSpan={4}>
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  disabled={offset === 0}
+                  disabled={offset === 0 || isPending}
                   onClick={() => {
                     setOffset((prev) => Math.max(0, prev - 10));
                   }}
@@ -124,7 +178,7 @@ export default function DataTable() {
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={submission.length < 10}
+                  disabled={submission.length < 10 || isPending}
                   onClick={() => {
                     setOffset((prev) => prev + 10);
                   }}
@@ -132,13 +186,11 @@ export default function DataTable() {
                   Next
                   <ChevronRight />
                 </Button>
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
-      )}
-      {isPending && <div>Loading...</div>}
-      {isError && <div>Error loading data</div>}
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
     </div>
   );
 }
