@@ -34,21 +34,25 @@ function truncate(
   return str.slice(0, maxLength - suffix.length) + suffix;
 }
 
-function findOffset(url: string): number | null {
-  const params = new URLSearchParams(url.split("?")[1]);
-  const offset = params.get("offset");
-  return offset !== null ? Number(offset) : null;
+function buildNextFetch(filter: string, offset: number): string {
+  return `/api/v1/all?sort=${filter}&offset=${offset}`;
 }
 
 export default function DataTable() {
   const [submission, setSubmission] = useState<Submission[]>([]);
-  const [next, setNext] = useState<string>("/api/v1/all?sort=latest");
-  const [offset, setOffset] = useState<number>(0);
+
+  // use both of these states to build the URL to fetch from: /api/v1/all?sort=<FILTER>&offset=<OFFSET>
+  const [filter, setFilter] = useState<string>("latest");
+  const [offset, setOffset] = useState<number>(0); // Start at 0
+
   const [isPending, setIsPending] = useState<boolean>(true);
   const [isError, setIsError] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch("http://localhost:3000" + next)
+    setIsPending(true);
+    setIsError(false);
+    
+    fetch("http://localhost:3000" + buildNextFetch(filter, offset))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Network response was not ok");
@@ -57,14 +61,6 @@ export default function DataTable() {
       })
       .then((json) => {
         const res: Submission[] = json.results;
-        setNext(json.next);
-        let offset: number | null = findOffset(json.next);
-        if (offset == null) {
-          offset = 0;
-        } else {
-          offset = offset - 10;
-        }
-        setOffset(offset);
         setSubmission(res);
         setIsPending(false);
       })
@@ -73,7 +69,7 @@ export default function DataTable() {
         setIsError(true);
         setIsPending(false);
       });
-  }, []);
+  }, [offset, filter]); // Also depend on filter in case you add filter controls later
 
   return (
     <div>
@@ -114,22 +110,35 @@ export default function DataTable() {
             ))}
           </TableBody>
           <TableFooter>
-            {!isPending && !isError && (
-              <>
-                <Button variant="outline" disabled={offset == 0}>
+            <TableRow key={"end"}>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  disabled={offset === 0}
+                  onClick={() => {
+                    setOffset((prev) => Math.max(0, prev - 10));
+                  }}
+                >
                   <ChevronLeft />
                   Prev
                 </Button>
-                <Button variant="outline" disabled={submission.length != 10}>
+                <Button
+                  variant="outline"
+                  disabled={submission.length < 10}
+                  onClick={() => {
+                    setOffset((prev) => prev + 10);
+                  }}
+                >
                   Next
                   <ChevronRight />
                 </Button>
-              </>
-            )}
+              </TableCell>
+            </TableRow>
           </TableFooter>
         </Table>
       )}
+      {isPending && <div>Loading...</div>}
+      {isError && <div>Error loading data</div>}
     </div>
-    // future: next button
   );
 }
