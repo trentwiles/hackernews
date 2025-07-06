@@ -397,6 +397,13 @@ func main() {
 		user = complete.User
 		userMetadata = complete.Metadata
 
+		if (user.Username == "") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": true,
+				"message": "No such user or account deleted",
+			})
+		}
+
 		return c.JSON(fiber.Map{
 			"username": user.Username,
 			"email": user.Email,

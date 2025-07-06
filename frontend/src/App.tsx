@@ -6,6 +6,7 @@ import MagicLink from "./components/MagicLink";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import Submit from "./components/Submit";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import User from "./components/User";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
               element={<MagicLink serviceName="HackerNews" />}
             />
             <Route path="/login-thanks" element={<LoginThanks />} />
+            <Route path="/u/:username" element={<User />} />
 
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}
             <Route
