@@ -1,6 +1,6 @@
 "use client";
 import Cookies from "js-cookie";
-import { ChefHat, CirclePlus, Command, FileStack, ListFilterPlus, LogIn, Trophy } from "lucide-react";
+import { CirclePlus, Command, FileStack, ListFilterPlus, LogIn, Trophy } from "lucide-react";
 import {
   Sidebar,
   SidebarGroup,
