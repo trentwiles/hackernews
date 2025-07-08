@@ -49,10 +49,19 @@ function buildNextFetch(filter: string, offset: number): string {
   return `/api/v1/all?sort=${filter}&offset=${offset}`;
 }
 
-export default function DataTable() {
+type props = {
+  sortType?: string
+}
+
+export default function DataTable(props: props) {
   const [submission, setSubmission] = useState<Submission[]>([]);
 
-  const [filter/*, setFilter */] = useState<string>("latest");
+  let tempFilter: string = "latest"
+  if (props !== undefined && props.sortType !== undefined) {
+    tempFilter = props.sortType
+  }
+
+  const [filter/*, setFilter */] = useState<string>(tempFilter);
   const [offset, setOffset] = useState<number>(0);
 
   const [isPending, setIsPending] = useState<boolean>(true);

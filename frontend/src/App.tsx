@@ -16,6 +16,9 @@ function App() {
           <Routes>
             {/* PUBLIC ROUTES */}
             <Route path="/" element={<Home />} />
+            <Route path="/latest" element={<Home sortType="latest" />} />
+            <Route path="/top" element={<Home sortType="best" />} />
+
             <Route path="/login" element={<Login serviceName="HackerNews" />} />
             <Route
               path="/magic"
