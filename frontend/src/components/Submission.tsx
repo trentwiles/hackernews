@@ -13,6 +13,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { datePrettyPrint, getTimeAgo } from "@/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 
 type submission = {
   username: string;
@@ -110,16 +112,25 @@ export default function Submission() {
                         <UserIcon className="h-4 w-4" />
                         <span>Posted by</span>
                         <Link
-                          to={"/u/trent"}
+                          to={"/u/" + s.username}
                           className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
                         >
-                          trent
+                          {s.username}
                         </Link>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock className="h-4 w-4" />
-                        <span>01/01/2001</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              {datePrettyPrint(s.created_at)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{getTimeAgo(s.created_at)}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>
@@ -128,8 +139,7 @@ export default function Submission() {
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-4">
                         <Button variant="outline" size="sm">
-                          <span className="font-medium">12</span>
-                          <span className="ml-1">upvotes</span>
+                          <span className="font-medium">{s.totalScore} upvotes</span>
                         </Button>
                       </div>
 
