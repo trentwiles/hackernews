@@ -13,6 +13,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { datePrettyPrint, getTimeAgo } from "@/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
 type Submission = {
   Id: string;
@@ -34,34 +40,23 @@ function truncate(
   return str.slice(0, maxLength - suffix.length) + suffix;
 }
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function buildNextFetch(filter: string, offset: number): string {
   return `/api/v1/all?sort=${filter}&offset=${offset}`;
 }
 
 type props = {
-  sortType?: string
-}
+  sortType?: string;
+};
 
 export default function DataTable(props: props) {
   const [submission, setSubmission] = useState<Submission[]>([]);
 
-  let tempFilter: string = "latest"
+  let tempFilter: string = "latest";
   if (props !== undefined && props.sortType !== undefined) {
-    tempFilter = props.sortType
+    tempFilter = props.sortType;
   }
 
-  const [filter/*, setFilter */] = useState<string>(tempFilter);
+  const [filter /*, setFilter */] = useState<string>(tempFilter);
   const [offset, setOffset] = useState<number>(0);
 
   const [isPending, setIsPending] = useState<boolean>(true);
@@ -70,7 +65,7 @@ export default function DataTable(props: props) {
   useEffect(() => {
     setIsPending(true);
     setIsError(false);
-    
+
     fetch("http://localhost:3000" + buildNextFetch(filter, offset))
       .then((res) => {
         if (!res.ok) {
@@ -138,13 +133,19 @@ export default function DataTable(props: props) {
             ))
           ) : isError ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-muted-foreground">
+              <TableCell
+                colSpan={4}
+                className="text-center text-muted-foreground"
+              >
                 Error loading data. Please try again.
               </TableCell>
             </TableRow>
           ) : submission.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-muted-foreground">
+              <TableCell
+                colSpan={4}
+                className="text-center text-muted-foreground"
+              >
                 No submissions found.
               </TableCell>
             </TableRow>
@@ -157,7 +158,10 @@ export default function DataTable(props: props) {
                   </a>
                 </TableCell>
                 <TableCell className="py-4">
-                  <Link to={"/submission/" + s.Id} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={"/submission/" + s.Id}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     {truncate(s.Body, 60)}
                   </Link>
                 </TableCell>
@@ -166,7 +170,16 @@ export default function DataTable(props: props) {
                     {s.Username}
                   </Link>
                 </TableCell>
-                <TableCell className="text-right py-4">{formatDate(s.Created_at)}</TableCell>
+                <TableCell className="text-right py-4">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p>{getTimeAgo(s.Created_at)}</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span>{datePrettyPrint(s.Created_at)}</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableCell>
               </TableRow>
             ))
           )}

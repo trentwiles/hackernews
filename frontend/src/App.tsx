@@ -8,6 +8,7 @@ import Submit from "./components/Submit";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import User from "./components/User";
 import Submission from "./components/Submission";
+import UserRedirect from "./components/UserRedirect";
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
             />
             <Route path="/login-thanks" element={<LoginThanks />} />
             <Route path="/u/:username" element={<User />} />
+            <Route path="/u/" element={<UserRedirect />} />
+            <Route path="/account/submissions" element={<UserRedirect />} />
             <Route path="/submission/:sid" element={<Submission />} />
 
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}

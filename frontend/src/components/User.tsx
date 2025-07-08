@@ -167,6 +167,12 @@ export default function User() {
                     <CardContent>
                       <div className="space-y-4">
                         {submissions !== undefined &&
+                          submissions.length == 0 && (
+                            <p className="text-muted-foreground text-sm">
+                              It's a bit empty in here, don't you think?
+                            </p>
+                          )}
+                        {submissions !== undefined &&
                           submissions.map((submission) => (
                             <div
                               key={submission.Id}

@@ -14,7 +14,11 @@ import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { datePrettyPrint, getTimeAgo } from "@/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
 type submission = {
   username: string;
@@ -56,7 +60,7 @@ export default function Submission() {
           created_at: data.metadata.createdAt,
           link: data.metadata.link,
           title: data.metadata.title,
-          username: data.metadata.username,
+          username: data.metadata.author,
           downvotes: data.votes.downvotes,
           totalScore: data.votes.total,
           upvotes: data.votes.upvotes,
@@ -110,25 +114,25 @@ export default function Submission() {
                     <div className="flex items-center gap-4 pt-4 border-t">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <UserIcon className="h-4 w-4" />
-                        <span>Posted by</span>
-                        <Link
-                          to={"/u/" + s.username}
-                          className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
-                        >
-                          {s.username}
-                        </Link>
+                        <span>
+                          Posted by&nbsp;
+                          <Link
+                            to={"/u/" + s.username}
+                            className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                          >
+                            {s.username}
+                          </Link>
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock className="h-4 w-4" />
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span>
-                              {datePrettyPrint(s.created_at)}
-                            </span>
+                            <p>{getTimeAgo(s.created_at)}</p>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{getTimeAgo(s.created_at)}</p>
+                            <span>{datePrettyPrint(s.created_at)}</span>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -139,7 +143,9 @@ export default function Submission() {
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-4">
                         <Button variant="outline" size="sm">
-                          <span className="font-medium">{s.totalScore} upvotes</span>
+                          <span className="font-medium">
+                            {s.totalScore} upvotes
+                          </span>
                         </Button>
                       </div>
 
