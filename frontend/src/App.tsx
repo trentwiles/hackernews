@@ -7,6 +7,7 @@ import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import Submit from "./components/Submit";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import User from "./components/User";
+import Submission from "./components/Submission";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             />
             <Route path="/login-thanks" element={<LoginThanks />} />
             <Route path="/u/:username" element={<User />} />
+            <Route path="/submission/:sid" element={<Submission />} />
 
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}
             <Route
