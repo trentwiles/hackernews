@@ -315,12 +315,13 @@ func main() {
 
 		return c.JSON(fiber.Map{
 			"id": queriedSubmission.Id,
-			"metdata": fiber.Map{
+			"metadata": fiber.Map{
 				"title":     queriedSubmission.Title,
 				"link":      queriedSubmission.Link,
 				"body":      queriedSubmission.Body,
 				"author":    queriedSubmission.Username,
 				"isFlagged": queriedSubmission.Flagged,
+				"createdAt": queriedSubmission.Created_at,
 			},
 			"votes": fiber.Map{
 				"upvotes":   votes.Upvotes,
