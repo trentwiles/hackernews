@@ -345,11 +345,10 @@ func main() {
 		offsetInt, err := strconv.Atoi(offset)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": true,
+				"error":   true,
 				"message": "error parsing 'offset', " + err.Error(),
 			})
 		}
-
 
 		var selection []db.Submission
 
@@ -368,16 +367,25 @@ func main() {
 		default:
 			fmt.Println("default placeholder")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": true,
+				"error":   true,
 				"message": "invalid sort filter",
+			})
+		}
+
+		// if we run the select query on the database, and there are less
+		// than the max amount of submissions available, then we know we've
+		// hit the end of the list; therefore, the next value should be null
+		if len(selection) != db.DEFAULT_SELECT_LIMIT {
+			return c.JSON(fiber.Map{
+				"results": selection,
+				"next":    nil,
 			})
 		}
 
 		return c.JSON(fiber.Map{
 			"results": selection,
-			"next": version + "/all?sort=" + sortType + "&offset=" + strconv.Itoa(offsetInt + 10),
+			"next":    version + "/all?sort=" + sortType + "&offset=" + strconv.Itoa(offsetInt+10),
 		})
-
 
 	})
 
@@ -397,22 +405,70 @@ func main() {
 		user = complete.User
 		userMetadata = complete.Metadata
 
-		if (user.Username == "") {
+		if user.Username == "" {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": true,
+				"error":   true,
 				"message": "No such user or account deleted",
 			})
 		}
 
 		return c.JSON(fiber.Map{
 			"username": user.Username,
-			"email": user.Email,
+			"email":    user.Email,
 			"joined":   user.Created_at,
 			"metadata": fiber.Map{
 				"full_name": userMetadata.Full_name,
 				"birthday":  userMetadata.Birthdate,
 				"bio":       userMetadata.Bio_text,
 			},
+		})
+	})
+
+	app.Get(version+"/userSubmissions", func(c *fiber.Ctx) error {
+		username := c.Query("username")
+		if username == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Please pass a username parameter",
+			})
+		}
+
+		offset := c.Query("offset")
+		if offset == "" {
+			offset = "0"
+		}
+
+		var tempUser db.User = db.User{Username: username}
+
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error":   true,
+				"message": "error parsing 'offset', " + err.Error(),
+			})
+		}
+
+		search := db.LatestUserSubmissions(offsetInt, tempUser)
+
+		if search == nil {
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{
+				"next":    nil,
+				"results": []any{},
+			})
+		}
+
+		// if we run the select query on the database, and there are less
+		// than the max amount of submissions available, then we know we've
+		// hit the end of the list; therefore, the next value should be null
+		if len(search) != db.DEFAULT_SELECT_LIMIT {
+			return c.JSON(fiber.Map{
+				"results": search,
+				"next":    nil,
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"next":    fmt.Sprintf("%s/userSubmissions?username=%s&offset=%d", version, username, offsetInt+10),
+			"results": search,
 		})
 	})
 

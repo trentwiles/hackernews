@@ -42,6 +42,13 @@ type Submission struct {
 	Created_at string
 }
 
+type BasicSubmission struct {
+	Id string
+	Title string
+	Link string
+	Created_at string
+}
+
 type VoteMetrics struct {
 	Upvotes   int
 	Downvotes int
@@ -321,6 +328,43 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 		} else {
 			current.Body = ""
 		}
+
+		submissions = append(submissions, current)
+	}
+
+	return submissions
+}
+
+func LatestUserSubmissions(offset int, user User) []BasicSubmission {
+	db, err := Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	query := `
+		SELECT id, title, link, created_at
+		FROM submissions
+		WHERE username = $1 AND flagged = false
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := db.Query(query, user.Username, DEFAULT_SELECT_LIMIT, offset)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	var submissions []BasicSubmission
+	for rows.Next() {
+		var current BasicSubmission
+
+		if err := rows.Scan(&current.Id, &current.Title, &current.Link, &current.Created_at); err != nil {
+			log.Fatal(err)
+		}
+
 
 		submissions = append(submissions, current)
 	}
