@@ -13,6 +13,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { CalendarDays, User as UserIcon } from "lucide-react";
 import CryptoJS from "crypto-js";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
 type user = {
   email: string;
@@ -60,19 +65,18 @@ function getTimeAgo(dateString: string): string {
 
   if (diffMs < msPerDay) {
     const hours = Math.floor(diffMs / msPerHour);
-    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
   } else if (diffMs < msPerMonth) {
     const days = Math.floor(diffMs / msPerDay);
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
+    return `${days} day${days !== 1 ? "s" : ""} ago`;
   } else if (diffMs < msPerYear) {
     const months = Math.floor(diffMs / msPerMonth);
-    return `${months} month${months !== 1 ? 's' : ''} ago`;
+    return `${months} month${months !== 1 ? "s" : ""} ago`;
   } else {
     const years = Math.floor(diffMs / msPerYear);
-    return `${years} year${years !== 1 ? 's' : ''} ago`;
+    return `${years} year${years !== 1 ? "s" : ""} ago`;
   }
 }
-
 
 export default function User() {
   const navigate = useNavigate();
@@ -178,9 +182,16 @@ export default function User() {
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <CalendarDays className="w-4 h-4" />
-                        <span>
-                          Joined {datePrettyPrint(currentUser.joined)}
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              Joined {datePrettyPrint(currentUser.joined)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{getTimeAgo(currentUser.joined)}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </CardContent>
                   </Card>
