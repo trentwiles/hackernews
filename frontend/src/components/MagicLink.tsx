@@ -51,6 +51,10 @@ export default function MagicLink(props: MagicLinkProps) {
         setUsername(data.username)
 
         document.cookie = `token=${token}; path=/; max-age=3600`;
+        // DANGER: this username cookie can obviously be edited by a client and forged
+        //         it should never be used to validate that someone is logged in, the token
+        //         above should always be passed to the server to preform this job
+        document.cookie = `username=${data.username}; path=/; max-age=3600`;
         setIsError(false)
         setCanConfirm(true)
       })

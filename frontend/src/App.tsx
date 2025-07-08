@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import User from "./components/User";
 import Submission from "./components/Submission";
 import UserRedirect from "./components/UserRedirect";
+import Logout from "./components/Logout";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/top" element={<Home sortType="best" />} />
 
             <Route path="/login" element={<Login serviceName="HackerNews" />} />
+            <Route path="/logout" element={<Logout/>} />
             <Route
               path="/magic"
               element={<MagicLink serviceName="HackerNews" />}
