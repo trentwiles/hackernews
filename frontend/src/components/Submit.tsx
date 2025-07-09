@@ -14,18 +14,20 @@ import {
 } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider } from "./ui/sidebar";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 export default function Submit() {
+  console.log(Cookies.get("token"))
   const { executeRecaptcha } = useGoogleReCaptcha();
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
+    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -36,6 +38,32 @@ export default function Submit() {
       agreeToTerms: false,
     },
   });
+
+  const linkValue = watch("link");
+
+  useEffect(() => {
+    if (linkValue == "") {
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      fetch("http://127.0.0.1:3000/api/v1/fetchWebsiteTitle?url=" + linkValue) // Replace with your actual endpoint
+        .then((res) => {
+          if (res.status !== 200) {
+            throw new Error("non-200 status: " + res.status)
+          }
+          return res.json()
+        })
+        .then((json) => {
+          // assuming the JSON response is 200 OK, we should have a response in the form:
+          // {"title":"..."}
+          setValue("title", json.title)
+        })
+        .catch((err) => console.error("Error fetching data:", err));
+    }, 500);
+    // ^^^ 500 milliseconds pause between when they stop typing and when we make the HTTP request
+
+    return () => clearTimeout(timeoutId);
+  }, [linkValue]);
 
   type formData = {
     link: string;
@@ -80,7 +108,6 @@ export default function Submit() {
       .catch((error) => {
         console.error(error);
       });
-    alert("Form submitted! Check console for data.");
   };
 
   const [isChecked, setIsChecked] = useState<boolean>(false);

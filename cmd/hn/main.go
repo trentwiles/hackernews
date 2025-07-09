@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"net/http"
+    "golang.org/x/net/html"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -574,6 +576,65 @@ func main() {
 
 	app.Get(version+"/status", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "Healthy", "status": 200})
+	})
+
+	app.Get(version+"/fetchWebsiteTitle", func(c *fiber.Ctx) error {
+		// success, _ := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		// if !success {
+		// 	return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		// }
+
+		url := c.Query("url")
+		if url == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Please pass a url parameter",
+			})
+		}
+
+		// make the request "object"
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			panic(err)
+		}
+
+		// set headers
+		req.Header.Set("User-Agent", "HackerNewsClone (+https://github.com/trentwiles/hackernews)")
+
+		// send the request object we just made
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error":   true,
+					"message": err.Error(),
+				})
+		}
+
+		defer resp.Body.Close()
+
+		tokenizer := html.NewTokenizer(resp.Body)
+
+		for {
+			tt := tokenizer.Next()
+			switch tt {
+			case html.ErrorToken:
+				log.Println("no title found/blocked")
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error":   true,
+					"message": "unable to fetch title for provided URL",
+				})
+			case html.StartTagToken, html.SelfClosingTagToken:
+				token := tokenizer.Token()
+				if token.Data == "title" {
+					tokenizer.Next()
+					return c.JSON(fiber.Map{
+						"title": string(tokenizer.Text()),
+					})
+				}
+			}
+		}
+
 	})
 
 	// 404
