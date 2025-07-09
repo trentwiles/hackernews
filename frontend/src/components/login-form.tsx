@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +17,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const DEFAULT_LOGIN_TEXT = "Log In"
+  const DEFAULT_LOGIN_TEXT = "Log In";
 
   const { executeRecaptcha } = useGoogleReCaptcha();
   const [username, setUsername] = useState<string>();
@@ -27,7 +27,7 @@ export function LoginForm({
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // prevent page reload
 
     if (!executeRecaptcha) {
@@ -43,8 +43,8 @@ export function LoginForm({
 
     setCanSubmit(false);
 
-    setLoginText("Please wait...")
-    
+    setLoginText("Please wait...");
+
     const token = await executeRecaptcha("login");
 
     fetch("http://localhost:3000/api/v1/login", {
@@ -67,17 +67,17 @@ export function LoginForm({
       })
       .then((data) => {
         console.log(data);
-        setCanSubmit(true)
+        setCanSubmit(true);
 
-        navigate('/login-thanks?email=' + email);
-        return
+        navigate("/login-thanks?email=" + email);
+        return;
       })
       .catch((error) => {
         console.log(error);
-        setCanSubmit(true)
+        setCanSubmit(true);
       });
 
-      setLoginText("Log In")
+    setLoginText("Log In");
   };
 
   return (

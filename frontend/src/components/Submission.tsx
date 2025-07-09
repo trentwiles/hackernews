@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { ArrowUpRight, Clock, User as UserIcon } from "lucide-react";
+import { ArrowUpRight, Clock, Trash, User as UserIcon } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
@@ -19,6 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
+import Cookies from "js-cookie";
 
 type submission = {
   username: string;
@@ -37,6 +38,7 @@ export default function Submission() {
   const [s, setS] = useState<submission>();
   const [pending, setPending] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  const [currentUser, setCurrentUser] = useState<string>();
 
   useEffect(() => {
     if (sid === undefined || sid == "") {
@@ -77,6 +79,39 @@ export default function Submission() {
         console.log(err);
       });
   }, [sid]);
+
+  useEffect(() => {
+    setCurrentUser(Cookies.get("username"));
+  }, []);
+
+  function deletePost() {
+    fetch("http://localhost:3000/api/v1/submission", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      body: JSON.stringify({
+        Id: sid,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+
+        navigate("/?deleted=" + sid);
+        return;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
 
   return (
     !pending &&
@@ -147,6 +182,16 @@ export default function Submission() {
                             {s.totalScore} upvotes
                           </span>
                         </Button>
+                        {currentUser == s.username && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deletePost()}
+                          >
+                            <Trash />
+                            <span className="font-medium">Delete</span>
+                          </Button>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2">

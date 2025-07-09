@@ -380,7 +380,7 @@ func CreateSubmission(submission Submission) string {
 	defer db.Close()
 
 	query := `
-		INSERT INTO submissions (username, link, body, flagged)
+		INSERT INTO submissions (username, title, link, body, flagged)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id;
 	`
