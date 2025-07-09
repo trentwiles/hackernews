@@ -63,8 +63,12 @@ type VoteMetrics struct {
 }
 
 type BasicSubmissionAndVote struct {
+	Title string
+	Link string
+	Body string
+	Created_at string
 	Id string
-	isUpvoted bool
+	IsUpvoted bool
 }
 
 // enum equiv in Go for audit log events
@@ -458,8 +462,9 @@ func GetAllUserVotes(user User) []BasicSubmissionAndVote {
 	}
 	// future: maybe instead of a string of IDs, use a string of submissions?
 	query := `
-		SELECT submission_id, positive
+		SELECT title, link, body, created_at, submission_id, positive
 		FROM votes
+		INNER JOIN submissions ON submission_id = submissions.id
 		WHERE voter_username = $1
 		LIMIT $2
 	`
@@ -474,9 +479,11 @@ func GetAllUserVotes(user User) []BasicSubmissionAndVote {
 	for rows.Next() {
 		var current BasicSubmissionAndVote
 
-		if err := rows.Scan(&current.Id, &current.isUpvoted); err != nil {
+		if err := rows.Scan(&current.Title, &current.Link, &current.Body, &current.Created_at, &current.Id, &current.IsUpvoted); err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Println(current.IsUpvoted)
 
 		submissions = append(submissions, current)
 	}
