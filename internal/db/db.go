@@ -67,6 +67,7 @@ type BasicSubmissionAndVote struct {
 	Link string
 	Body string
 	Created_at string
+	Username string
 	Id string
 	IsUpvoted bool
 }
@@ -462,7 +463,7 @@ func GetAllUserVotes(user User) []BasicSubmissionAndVote {
 	}
 	// future: maybe instead of a string of IDs, use a string of submissions?
 	query := `
-		SELECT title, link, body, created_at, submission_id, positive
+		SELECT title, link, body, created_at, username, submission_id, positive
 		FROM votes
 		INNER JOIN submissions ON submission_id = submissions.id
 		WHERE voter_username = $1
@@ -479,7 +480,7 @@ func GetAllUserVotes(user User) []BasicSubmissionAndVote {
 	for rows.Next() {
 		var current BasicSubmissionAndVote
 
-		if err := rows.Scan(&current.Title, &current.Link, &current.Body, &current.Created_at, &current.Id, &current.IsUpvoted); err != nil {
+		if err := rows.Scan(&current.Title, &current.Link, &current.Body, &current.Created_at, &current.Username, &current.Id, &current.IsUpvoted); err != nil {
 			log.Fatal(err)
 		}
 

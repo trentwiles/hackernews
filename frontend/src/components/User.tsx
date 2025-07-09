@@ -36,6 +36,15 @@ type basicSubmission = {
   Created_at: string;
 };
 
+type votedPost = {
+  Id: string;
+  Title: string;
+  Link: string;
+  Created_at: string;
+  Username: string;
+  Upvoted: boolean;
+};
+
 export default function User() {
   const navigate = useNavigate();
   const { username } = useParams();
@@ -43,6 +52,7 @@ export default function User() {
   const [error, isError] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<user>();
   const [submissions, setSubmissions] = useState<basicSubmission[]>();
+  const [votedPosts, setVotedPosts] = useState<votedPost[]>();
 
   useEffect(() => {
     fetch("http://localhost:3000/api/v1/user?username=" + username)
@@ -87,6 +97,48 @@ export default function User() {
       })
       .then((data) => {
         setSubmissions(data.results);
+        setPending(false);
+      })
+      .catch((err) => {
+        toast("Error: " + err);
+        setPending(false);
+        isError(true);
+      });
+  }, [username]);
+
+  useEffect(() => {
+    setPending(true)
+    fetch("http://localhost:3000/api/v1/allUserVotes?username=" + username)
+      .then((res) => {
+        if (res.status === 404) {
+          navigate("/404");
+          return;
+        }
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then((data) => {
+        const listOfVotes: votedPost[] = [];
+
+        if (data.results === undefined || data.results === null) {
+          setVotedPosts([])
+          setPending(false)
+          isError(false)
+          return
+        }
+
+        data.results.map((datapoint) => {
+          const current: votedPost = {
+            Created_at: datapoint.Created_at,
+            Id: datapoint.Id,
+            Link: datapoint.Link,
+            Title: datapoint.Title,
+            Upvoted: datapoint.IsUpvoted,
+            Username: datapoint.Username,
+          };
+          listOfVotes.push(current);
+        });
+        setVotedPosts(listOfVotes)
         setPending(false);
       })
       .catch((err) => {
@@ -156,7 +208,7 @@ export default function User() {
                 </div>
 
                 {/* Right Column - Submissions (2/3) */}
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Submissions</CardTitle>
@@ -200,6 +252,60 @@ export default function User() {
                             </div>
                           ))}
                       </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Voted Posts Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Voted Posts</CardTitle>
+                      <CardDescription>
+                        Posts upvoted or downvoted by {currentUser.username}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {!pending && !error && (
+                        <div className="space-y-4">
+                          {votedPosts !== undefined &&
+                            votedPosts.length == 0 && (
+                              <p className="text-muted-foreground text-sm">
+                                No voted posts yet.
+                              </p>
+                            )}
+                          {votedPosts !== undefined &&
+                            votedPosts.map((post) => (
+                              <div
+                                key={post.Id}
+                                className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div className="space-y-1">
+                                    <h3 className="font-semibold text-lg hover:underline">
+                                      <Link to={"/submission/" + post.Id}>
+                                        {post.Title}
+                                      </Link>
+                                    </h3>
+                                    <div className="flex gap-3 text-sm text-muted-foreground">
+                                      <span className="text-xs">
+                                        {currentUser.username}{" "}
+                                        {post.Upvoted ? "upvoted" : "downvoted"}{" "}
+                                        this
+                                      </span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
+                                        <a href={post.Link} target="_blank">
+                                          {post.Link}
+                                        </a>
+                                      </span>
+                                      <span>
+                                        {datePrettyPrint(post.Created_at)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
