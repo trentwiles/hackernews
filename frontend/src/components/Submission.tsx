@@ -8,7 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { ArrowUpRight, Clock, Trash, User as UserIcon } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpRight,
+  Clock,
+  Trash,
+  User as UserIcon,
+} from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
@@ -39,6 +46,9 @@ export default function Submission() {
   const [pending, setPending] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string>();
+
+  const [upvoteEnabled, setUpvoteEnabled] = useState<boolean>(true);
+  const [downvoteEnabled, setDownvoteEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     if (sid === undefined || sid == "") {
@@ -107,6 +117,41 @@ export default function Submission() {
 
         navigate("/?deleted=" + sid);
         return;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  function vote(intent: boolean) {
+    if (intent) {
+      setUpvoteEnabled(false);
+      setDownvoteEnabled(true);
+    } else {
+      setDownvoteEnabled(false);
+      setUpvoteEnabled(true);
+    }
+    // Id: req.Id}, req.Upvote
+    fetch("http://localhost:3000/api/v1/vote", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      body: JSON.stringify({
+        Id: sid,
+        Upvote: intent,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
       })
       .catch((error) => {
         console.log(error);
@@ -195,11 +240,21 @@ export default function Submission() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          Share
+                        <Button
+                          variant={!upvoteEnabled ? "destructive" : "outline"}
+                          size="sm"
+                          disabled={!upvoteEnabled}
+                          onClick={() => vote(true)}
+                        >
+                          <ArrowUp />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          Save
+                        <Button
+                          variant={!downvoteEnabled ? "destructive" : "outline"}
+                          size="sm"
+                          disabled={!downvoteEnabled}
+                          onClick={() => vote(false)}
+                        >
+                          <ArrowDown />
                         </Button>
                       </div>
                     </div>

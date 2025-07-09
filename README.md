@@ -7,8 +7,8 @@
 | Login via Magic Link   | ✅ Complete    | ✅ Complete    | JWT-based authentication, cannot be done over `eduroam` because they block outbound email port connections. |
 | Magic Link accept page | ✅ Complete    | ✅ Complete    | Page where the server validates the magic link found in the email, and adds the token to browser cookies    |
 | News/Submission Feed   | 🟡 In Progress | 🟡 In Progress | Need to complete different kinds of sorts (newest, best, oldest), and requires pagination                   |
-| Post Submission        | ✅ Complete    | ⬜ Not Started |                                                                                                             |
-| User Profile Page      | ✅ Complete    | ⬜ Not Started |                                                                                                             |
+| Post Submission        | ✅ Complete    | ✅ Complete |                                                                                                             |
+| User Profile Page      | ✅ Complete    | ✅ Complete |                                                                                                             |
 | Comments               | ⬜ Not Started | ⬜ Not Started | SQL implementation is complete                                                                              |
 | Admin Console          | ⬜ Not Started | ⬜ Not Started |                                                                                                             |
 
@@ -16,7 +16,7 @@
 
 - Modularize routes
 - Improved error handling (ie. stop using `log.Fatal` and start using `fmt.Errorf`)
-- Write API docs
+- New name
 
 ## Route Modularization File Structure
 
