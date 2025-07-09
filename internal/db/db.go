@@ -62,6 +62,11 @@ type VoteMetrics struct {
 	Downvotes int
 }
 
+type BasicSubmissionAndVote struct {
+	Id string
+	isUpvoted bool
+}
+
 // enum equiv in Go for audit log events
 // ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email')
 type AuditEvent string
@@ -445,6 +450,38 @@ func GetUserVote(user User, submission Submission) (bool, bool) {
 	}
 
 	return true, didUpvote
+}
+
+func GetAllUserVotes(user User) []BasicSubmissionAndVote {
+	if user.Username == "" {
+		log.Fatal("user's username cannot be blank")
+	}
+	// future: maybe instead of a string of IDs, use a string of submissions?
+	query := `
+		SELECT submission_id, positive
+		FROM votes
+		WHERE voter_username = $1
+		LIMIT $2
+	`
+
+	rows, err := GetDB().Query(query, user.Username, DEFAULT_SELECT_LIMIT)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var submissions []BasicSubmissionAndVote
+	for rows.Next() {
+		var current BasicSubmissionAndVote
+
+		if err := rows.Scan(&current.Id, &current.isUpvoted); err != nil {
+			log.Fatal(err)
+		}
+
+		submissions = append(submissions, current)
+	}
+
+	return submissions
 }
 
 func CreateMagicLink(user User) string {

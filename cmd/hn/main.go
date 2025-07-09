@@ -323,6 +323,19 @@ func main() {
 		return c.JSON(fiber.Map{"id": req.Id, "voteSuccess": voteSuccess})
 	})
 
+	app.Get(version+"/allUserVotes", func(c *fiber.Ctx) error {
+		username := c.Query("username")
+		if username == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please pass a username parameter"})
+		}
+
+		posts := db.GetAllUserVotes(db.User{Username: username})
+
+		return c.JSON(fiber.Map{
+			"results": posts,
+		})
+	})
+
 	// aka get the metadata and votes on a post
 	app.Get(version+"/submission", func(c *fiber.Ctx) error {
 		id := c.Query("id")
