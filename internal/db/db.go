@@ -484,13 +484,17 @@ func GetUserVote(user User, submission Submission) (bool, bool) {
 		log.Fatal("missing submission ID")
 	}
 
-	var didUpvote bool
-	err = db.QueryRow("SELECT positive FROM votes WHERE username = $1 AND submission_id = $2", user.Username, submission.Id).Scan(&didUpvote)
+	var didUpvote bool = false
+	err = db.QueryRow("SELECT positive FROM votes WHERE voter_username = $1 AND submission_id = $2", user.Username, submission.Id).Scan(&didUpvote)
 
 	if err == sql.ErrNoRows {
 		fmt.Printf("No upvote found for user %s on post %s\n", user.Username, submission.Id)
 		// Empty user = invalid token
 		return false, false
+	}
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return true, didUpvote

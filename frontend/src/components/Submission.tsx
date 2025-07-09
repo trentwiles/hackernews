@@ -13,6 +13,7 @@ import {
   ArrowUp,
   ArrowUpRight,
   Clock,
+  Share,
   Trash,
   User as UserIcon,
 } from "lucide-react";
@@ -49,6 +50,9 @@ export default function Submission() {
 
   const [upvoteEnabled, setUpvoteEnabled] = useState<boolean>(true);
   const [downvoteEnabled, setDownvoteEnabled] = useState<boolean>(true);
+  const [canVote, setCanVote] = useState<boolean>(false);
+
+  const [shareButtonText, setShareButtonText] = useState<string>("Share")
 
   useEffect(() => {
     if (sid === undefined || sid == "") {
@@ -88,11 +92,51 @@ export default function Submission() {
         setError(true);
         console.log(err);
       });
-  }, [sid]);
+  }, [sid, upvoteEnabled, downvoteEnabled]);
+  //       ^^^^           ^^^^
+  // whenever the user votes or downvotes, we refresh the total votes
 
   useEffect(() => {
     setCurrentUser(Cookies.get("username"));
   }, []);
+
+  // set the vote button, if the user voted
+  useEffect(() => {
+    fetch("http://localhost:3000/api/v1/vote?id=" + sid, {
+      headers: {
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          setCanVote(false);
+          throw new Error("Unauthorized");  // This will skip to catch
+        }
+
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then((data) => {
+        setCanVote(true);
+        if (!data.didVote) {
+          setUpvoteEnabled(true);
+          setDownvoteEnabled(true);
+          return;
+        }
+        if (data.didUpvote) {
+          setUpvoteEnabled(false);
+          setDownvoteEnabled(true);
+        } else {
+          setUpvoteEnabled(true);
+          setDownvoteEnabled(false);
+        }
+      })
+      .catch((err) => {
+        // whatever
+        console.error(err);
+        return;
+      });
+  }, [sid]);
 
   function deletePost() {
     fetch("http://localhost:3000/api/v1/submission", {
@@ -158,6 +202,8 @@ export default function Submission() {
       });
   }
 
+  console.log(canVote + " <-- can vote???")
+
   return (
     !pending &&
     !error &&
@@ -222,10 +268,13 @@ export default function Submission() {
                   <CardFooter className="bg-gray-50 border-t">
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-4">
-                        <Button variant="outline" size="sm">
-                          <span className="font-medium">
-                            {s.totalScore} upvotes
-                          </span>
+                        <Button variant="outline" size="sm" onClick={async () => {
+                          await navigator.clipboard.writeText(window.location.href);
+                          setShareButtonText("Copied To Clipboard")
+                          await new Promise((r) => setTimeout(r, 2000))
+                          setShareButtonText("Share")
+                        }}>
+                            <Share /> {shareButtonText}
                         </Button>
                         {currentUser == s.username && (
                           <Button
@@ -240,22 +289,35 @@ export default function Submission() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant={!upvoteEnabled ? "destructive" : "outline"}
-                          size="sm"
-                          disabled={!upvoteEnabled}
-                          onClick={() => vote(true)}
-                        >
-                          <ArrowUp />
+                        {canVote && (
+                            <Button
+                              variant={
+                                !upvoteEnabled ? "destructive" : "outline"
+                              }
+                              size="sm"
+                              disabled={!upvoteEnabled}
+                              onClick={() => vote(true)}
+                            >
+                              <ArrowUp />
+                            </Button>
+                        )}
+                        <Button variant="outline" size="sm">
+                          <span className="font-medium">
+                            {s.totalScore} upvotes
+                          </span>
                         </Button>
-                        <Button
-                          variant={!downvoteEnabled ? "destructive" : "outline"}
-                          size="sm"
-                          disabled={!downvoteEnabled}
-                          onClick={() => vote(false)}
-                        >
-                          <ArrowDown />
-                        </Button>
+                        {canVote && (
+                          <Button
+                              variant={
+                                !downvoteEnabled ? "destructive" : "outline"
+                              }
+                              size="sm"
+                              disabled={!downvoteEnabled}
+                              onClick={() => vote(false)}
+                            >
+                              <ArrowDown />
+                            </Button>
+                        )}
                       </div>
                     </div>
                   </CardFooter>
