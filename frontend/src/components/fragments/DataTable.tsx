@@ -163,6 +163,7 @@ export default function DataTable(props: props) {
                     className="text-muted-foreground hover:text-foreground"
                   >
                     {truncate(s.Body, 60)}
+                    {s.Body.length == 0 && "(no preview)"}
                   </Link>
                 </TableCell>
                 <TableCell className="py-4">

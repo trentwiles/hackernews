@@ -274,9 +274,16 @@ func SearchSubmission(stub Submission) Submission {
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&stub.Id, &stub.Username, &stub.Title, &stub.Link, &stub.Body, &stub.Flagged, &stub.Created_at)
+		var tempBody sql.NullString
+		err := rows.Scan(&stub.Id, &stub.Username, &stub.Title, &stub.Link, &tempBody, &stub.Flagged, &stub.Created_at)
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		if tempBody.String != "" {
+			stub.Body = tempBody.String
+		} else {
+			stub.Body = ""
 		}
 
 		return stub
@@ -303,7 +310,7 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 					ELSE -1 
 				END) AS score
 			FROM submissions
-			INNER JOIN votes ON submissions.id = votes.submission_id
+			LEFT JOIN votes ON submissions.id = votes.submission_id
 			WHERE flagged = false
 			GROUP BY submissions.id
 			` + order + `
@@ -482,10 +489,17 @@ func GetAllUserVotes(user User) []BasicSubmissionAndVote {
 
 	var submissions []BasicSubmissionAndVote
 	for rows.Next() {
+		var tempBody sql.NullString
 		var current BasicSubmissionAndVote
 
-		if err := rows.Scan(&current.Title, &current.Link, &current.Body, &current.Created_at, &current.Username, &current.Id, &current.IsUpvoted); err != nil {
+		if err := rows.Scan(&current.Title, &current.Link, &tempBody, &current.Created_at, &current.Username, &current.Id, &current.IsUpvoted); err != nil {
 			log.Fatal(err)
+		}
+
+		if tempBody.Valid {
+			current.Body = tempBody.String
+		} else {
+			current.Body = ""
 		}
 
 		fmt.Println(current.IsUpvoted)
