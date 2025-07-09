@@ -3,16 +3,17 @@ import DataTable from "./fragments/DataTable";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 type props = {
-  sortType?: string
-}
+  sortType?: string;
+};
 
 export default function Home(props: props) {
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <WebSidebar />
         <SidebarInset>
-          <DataTable {...props} />
+          <DataTable key={props.sortType} {...props} />
         </SidebarInset>
       </div>
     </SidebarProvider>

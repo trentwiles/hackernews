@@ -48,6 +48,7 @@ type Submission struct {
 	Body       string
 	Flagged    bool
 	Created_at string
+	Votes int
 }
 
 type BasicSubmission struct {
@@ -293,17 +294,20 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 	case Oldest:
 		order = "ORDER BY created_at ASC"
 	case Best:
-		fmt.Println("WARNING: BEST SELECT WAS USED!!! this has not been implemented, either don't use it or implement it")
-		order = ""
+		order = `ORDER BY score DESC`
 	}
 
 	query := `
-		SELECT id, username, title, link, body, created_at
-		FROM submissions
-		WHERE flagged = false
-		` + order + `
-		LIMIT $1 OFFSET $2
-	`
+			SELECT submissions.id, username, title, link, body, created_at, SUM(CASE 
+					WHEN positive = true THEN 1 
+					ELSE -1 
+				END) AS score
+			FROM submissions
+			INNER JOIN votes ON submissions.id = votes.submission_id
+			WHERE flagged = false
+			GROUP BY submissions.id
+			` + order + `
+			LIMIT $1 OFFSET $2`
 
 	rows, err := GetDB().Query(query, DEFAULT_SELECT_LIMIT, offset)
 	if err != nil {
@@ -316,7 +320,7 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 		var tempBody sql.NullString
 		var current Submission
 
-		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &tempBody, &current.Created_at); err != nil {
+		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &tempBody, &current.Created_at, &current.Votes); err != nil {
 			log.Fatal(err)
 		}
 
