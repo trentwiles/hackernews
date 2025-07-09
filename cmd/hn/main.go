@@ -266,6 +266,34 @@ func main() {
 		})
 	})
 
+	// determine if a user has voted on a post, and if they have
+	// whether it is an upvote or downvote
+	app.Get(version+"/vote", func(c *fiber.Ctx) error {
+		id := c.Query("id")
+		if id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please pass an id parameter"})
+		}
+
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		didVote, didUpvote := db.GetUserVote(db.User{Username: username}, db.Submission{Id: id})
+
+		if !didVote {
+			return c.JSON(fiber.Map{
+				"didVote": false,
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"didVote":   true,
+			"didUpvote": didUpvote,
+		})
+	})
+
 	app.Post(version+"/vote", func(c *fiber.Ctx) error {
 		var req VoteRequest
 
@@ -300,10 +328,6 @@ func main() {
 		id := c.Query("id")
 		if id == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please pass an id parameter"})
-		}
-
-		if id == "" {
-			return c.JSON(fiber.Map{"message": "Please pass an id parameter"})
 		}
 
 		var queriedSubmission db.Submission = db.SearchSubmission(db.Submission{Id: id})

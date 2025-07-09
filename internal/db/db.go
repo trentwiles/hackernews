@@ -464,6 +464,38 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 	return true
 }
 
+// Response meaning:
+// Boolean #1: did the user vote on the post?
+// Boolean #2: if so, did they upvote (true) or downvote (false)?
+func GetUserVote(user User, submission Submission) (bool, bool) {
+	// connection via connection function
+	db, err := Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	// end connection via connection function
+
+	if user.Username == "" {
+		log.Fatal("missing username")
+	}
+
+	if submission.Id == "" {
+		log.Fatal("missing submission ID")
+	}
+
+	var didUpvote bool
+	err = db.QueryRow("SELECT positive FROM votes WHERE username = $1 AND submission_id = $2", user.Username, submission.Id).Scan(&didUpvote)
+
+	if err == sql.ErrNoRows {
+		fmt.Printf("No upvote found for user %s on post %s\n", user.Username, submission.Id)
+		// Empty user = invalid token
+		return false, false
+	}
+
+	return true, didUpvote
+}
+
 func CreateMagicLink(user User) string {
 	// connection via connection function
 	db, err := Connect()
