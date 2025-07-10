@@ -16,6 +16,18 @@ export function datePrettyPrint(isoDate: string) {
   return formatted;
 }
 
+export function simpleDatePrettyPrint(isoDate: string) {
+  const date = new Date(isoDate);
+
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+
+  const formatted = `${month}/${day}/${year}`;
+
+  return formatted;
+}
+
 export function getTimeAgo(dateString: string): string {
   const now = new Date();
   const past = new Date(dateString);

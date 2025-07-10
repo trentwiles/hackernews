@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/net/html"
 	"log"
-	"strconv"
 	"net/http"
-    "golang.org/x/net/html"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -460,6 +460,7 @@ func main() {
 				"full_name": userMetadata.Full_name,
 				"birthday":  userMetadata.Birthdate,
 				"bio":       userMetadata.Bio_text,
+				"isAdmin":   userMetadata.IsAdmin,
 			},
 		})
 	})
@@ -606,9 +607,9 @@ func main() {
 		resp, err := client.Do(req)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error":   true,
-					"message": err.Error(),
-				})
+				"error":   true,
+				"message": err.Error(),
+			})
 		}
 
 		defer resp.Body.Close()

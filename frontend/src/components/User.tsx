@@ -11,14 +11,14 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { CalendarDays, User as UserIcon } from "lucide-react";
+import { Cake, CalendarDays, User as UserIcon } from "lucide-react";
 import CryptoJS from "crypto-js";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
-import { datePrettyPrint, getTimeAgo } from "@/utils";
+import { datePrettyPrint, getTimeAgo, simpleDatePrettyPrint } from "@/utils";
 
 type user = {
   email: string;
@@ -107,7 +107,7 @@ export default function User() {
   }, [username]);
 
   useEffect(() => {
-    setPending(true)
+    setPending(true);
     fetch("http://localhost:3000/api/v1/allUserVotes?username=" + username)
       .then((res) => {
         if (res.status === 404) {
@@ -121,10 +121,10 @@ export default function User() {
         const listOfVotes: votedPost[] = [];
 
         if (data.results === undefined || data.results === null) {
-          setVotedPosts([])
-          setPending(false)
-          isError(false)
-          return
+          setVotedPosts([]);
+          setPending(false);
+          isError(false);
+          return;
         }
 
         data.results.map((datapoint) => {
@@ -138,7 +138,7 @@ export default function User() {
           };
           listOfVotes.push(current);
         });
-        setVotedPosts(listOfVotes)
+        setVotedPosts(listOfVotes);
         setPending(false);
       })
       .catch((err) => {
@@ -203,6 +203,21 @@ export default function User() {
                           </TooltipContent>
                         </Tooltip>
                       </div>
+                      {currentUser.birthday != "" && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Cake className="w-4 h-4" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                {simpleDatePrettyPrint(currentUser.birthday)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{getTimeAgo(currentUser.birthday)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

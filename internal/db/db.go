@@ -33,6 +33,7 @@ type UserMetadata struct {
 	Full_name string
 	Birthdate string
 	Bio_text  string
+	IsAdmin bool
 }
 
 type CompleteUser struct {
@@ -211,14 +212,25 @@ func SearchUser(user User) CompleteUser {
 	// now that we've got the user themselves, let's grab their metadata
 	var tempMetadata = UserMetadata{}
 	if tempUser.Username != "" {
-		rows, err = GetDB().Query("SELECT * FROM bio WHERE username = $1", tempUser.Username)
+		query := `
+		SELECT bio.username, bio.full_name, bio.birthdate, bio.bio_text, 
+		CASE 
+			WHEN admins.username IS NOT NULL THEN true
+			ELSE false
+		END AS isAdmin
+
+		FROM bio
+		LEFT JOIN admins ON bio.username = admins.username
+		WHERE bio.username = $1;
+		`
+		rows, err = GetDB().Query(query, tempUser.Username)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer rows.Close()
 
 		for rows.Next() {
-			err := rows.Scan(&tempMetadata.Username, &tempMetadata.Full_name, &tempMetadata.Birthdate, &tempMetadata.Bio_text)
+			err := rows.Scan(&tempMetadata.Username, &tempMetadata.Full_name, &tempMetadata.Birthdate, &tempMetadata.Bio_text, &tempMetadata.IsAdmin)
 			if err != nil {
 				log.Fatal(err)
 			}
