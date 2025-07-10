@@ -5,24 +5,31 @@
 ## Alpha (MVP, v0.1.0)
 
 ### Features
-* Magic Link login system (password free, managed by JWT tokens)
-* Submission Posting (with full Google Captcha v3 support)
-* Submission Voting (upvotes/downvotes, options to sort by votes)
-* User bio/birthday/full name customization on "account settings" page
+
+- Magic Link login system (password free, managed by JWT tokens)
+- Submission Posting (with full Google Captcha v3 support)
+- Submission Voting (upvotes/downvotes, options to sort by votes)
+- User bio/birthday/full name customization on "account settings" page
 
 ### In Progress
-* Command line logging (clean up what we currently have)
-* Basic admin page (basic website metrics)
-* Name change!
+
+- Command line logging (clean up what we currently have)
+- Basic admin page (basic website metrics)
+- Name change!
 
 ## Beta ("version two", v0.2.0)
 
 ### In Progress
-* Comments (and comment threads)
-* Ability to report a post (and maybe a user?)
-* `.env` usage on the frontend
-* Fully working admin page (view/delete flagged posts, delete users, view full website metrics)
-* Clean up error handling (mostly using Log.fatal now, not great for production as this kills the program)
+
+- Comments (and comment threads)
+- Ability to report a post (and maybe a user?)
+- `.env` usage on the frontend
+- Fully working admin page (view/delete flagged posts, delete users, view full website metrics)
+- Clean up error handling (mostly using Log.fatal now, not great for production as this kills the program)
+
+## Production ("version three", v1.0.0)
+
+- Logging to a file, which is then synced with a S3 Bucket
 
 <hr>
 
@@ -55,3 +62,13 @@
 |    |--user_handler.go
 |    |--login_handler.go
 ```
+
+## Logging
+
+HTTP request logging is done by a built in middleware for Fiber. Other logs are placed in the database and backend "core" logic files.
+
+| Type      | Description                                                      |
+| --------- | ---------------------------------------------------------------- |
+| `[INFO]`  | Basic event, not very important                                  |
+| `[WARN]`  | Some sort of failure took place, wasn't fatal                    |
+| `[FATAL]` | Error that killed the program took place, pay attention to these |

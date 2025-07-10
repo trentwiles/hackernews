@@ -33,7 +33,7 @@ type UserMetadata struct {
 	Full_name string
 	Birthdate string
 	Bio_text  string
-	IsAdmin bool
+	IsAdmin   bool
 }
 
 type CompleteUser struct {
@@ -49,13 +49,13 @@ type Submission struct {
 	Body       string
 	Flagged    bool
 	Created_at string
-	Votes int
+	Votes      int
 }
 
 type BasicSubmission struct {
-	Id string
-	Title string
-	Link string
+	Id         string
+	Title      string
+	Link       string
 	Created_at string
 }
 
@@ -65,13 +65,13 @@ type VoteMetrics struct {
 }
 
 type BasicSubmissionAndVote struct {
-	Title string
-	Link string
-	Body string
+	Title      string
+	Link       string
+	Body       string
 	Created_at string
-	Username string
-	Id string
-	IsUpvoted bool
+	Username   string
+	Id         string
+	IsUpvoted  bool
 }
 
 // enum equiv in Go for audit log events
@@ -100,24 +100,27 @@ func InitDB() error {
 	var err error
 	once.Do(func() {
 		config.LoadEnv()
-		connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable", 
-			config.GetEnv("POSTGRES_USERNAME"), 
-			config.GetEnv("POSTGRES_PASSWORD"), 
+		connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable",
+			config.GetEnv("POSTGRES_USERNAME"),
+			config.GetEnv("POSTGRES_PASSWORD"),
 			config.GetEnv("POSTGRES_DB"))
-		
+
 		db, err = sql.Open("postgres", connStr)
 		if err != nil {
+			log.Printf("[WARN] Issue establishing PostgreSQL connection: %s\n", err.Error())
 			return
 		}
-		
+
 		// connection pool config -- future, read this from an .env
 		db.SetMaxOpenConns(25)
 		db.SetMaxIdleConns(5)
 		db.SetConnMaxLifetime(5 * time.Minute)
-		
+
 		// test connection
 		err = db.Ping()
 	})
+
+	log.Println("[INFO] PostgreSQL connection pool created")
 	return err
 }
 
@@ -128,6 +131,8 @@ func GetDB() *sql.DB {
 			log.Fatal("Failed to initialize database:", err)
 		}
 	}
+
+	log.Println("[INFO] PostgreSQL connection pool retrieved")
 	return db
 }
 
@@ -143,6 +148,8 @@ func CreateUser(user User) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("[INFO] Create user %s with email %s from IP address %s\n", user.Username, user.Email, user.Registered_ip)
 }
 
 func UpsertUserMetadata(metadata UserMetadata) {
@@ -158,6 +165,8 @@ func UpsertUserMetadata(metadata UserMetadata) {
 		log.Fatal(err)
 	}
 
+	log.Printf("[INFO] Check that user %s exists in the database (%t)\n", metadata.Username, exists)
+
 	if exists {
 		// Update existing metadata
 		_, err = GetDB().Exec(
@@ -167,6 +176,7 @@ func UpsertUserMetadata(metadata UserMetadata) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Printf("[INFO] User exists, updated user %s\n", metadata.Username)
 	} else {
 		// Insert new metadata
 		_, err = GetDB().Exec(
@@ -176,6 +186,8 @@ func UpsertUserMetadata(metadata UserMetadata) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		log.Printf("[INFO] User did not exist, inserted user %s\n", metadata.Username)
 	}
 }
 
@@ -193,11 +205,14 @@ func SearchUser(user User) CompleteUser {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		log.Printf("[INFO] Queried user %s via username\n", user.Username)
 	} else {
 		rows, err = GetDB().Query("SELECT * FROM users WHERE email = $1", user.Email)
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Printf("[INFO] Queried user email %s to get user\n", user.Email)
 	}
 	defer rows.Close()
 
@@ -207,6 +222,12 @@ func SearchUser(user User) CompleteUser {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	if tempUser.Username == "" {
+		log.Printf("[INFO] User query search did not result in any user(s)\n")
+	} else {
+		log.Printf("[INFO] User query search resulted in user %s created @ %s\n", tempUser.Username, tempUser.Created_at)
 	}
 
 	// now that we've got the user themselves, let's grab their metadata
@@ -235,6 +256,8 @@ func SearchUser(user User) CompleteUser {
 				log.Fatal(err)
 			}
 		}
+
+		log.Printf("[INFO] User query metadata search success, admin status: %t\n", tempMetadata.IsAdmin)
 	}
 
 	return CompleteUser{User: tempUser, Metadata: tempMetadata}
@@ -252,14 +275,19 @@ func DeleteUser(user User) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		log.Printf("[INFO] Deleted user %s (via username)\n", user.Username)
 	} else {
 		_, err = GetDB().Exec("DELETE FROM users WHERE email = $1", user.Email)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		log.Printf("[INFO] Deleted user via email, %s\n", user.Email)
 	}
 
 	// additional note: user bios are cascading, so Postgres will delete them automatically
+	// future: find out if a user was deleted, via RETURNING?
 }
 
 // validation for the correct user is done in the API business logic
@@ -272,6 +300,8 @@ func DeleteSubmission(submission Submission) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("[INFO] Deleted submission %s", submission.Id)
 }
 
 func SearchSubmission(stub Submission) Submission {
@@ -298,6 +328,8 @@ func SearchSubmission(stub Submission) Submission {
 			stub.Body = ""
 		}
 
+		log.Printf("[INFO] Succesful query for submission %s created at %s", stub.Id, stub.Created_at)
+
 		return stub
 	}
 
@@ -310,10 +342,13 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 	switch sort {
 	case Latest:
 		order = "ORDER BY created_at DESC"
+		log.Printf("[INFO] Attempting all submissions sort query for filter 'latest'\n")
 	case Oldest:
 		order = "ORDER BY created_at ASC"
+		log.Printf("[INFO] Attempting all submissions sort query for filter 'oldest'\n")
 	case Best:
 		order = `ORDER BY score DESC`
+		log.Printf("[INFO] Attempting all submissions sort query for filter 'best'\n")
 	}
 
 	query := `
@@ -330,13 +365,13 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 			` + order + `
 			LIMIT $1 OFFSET $2`
 
-	fmt.Println(offset)
-
 	rows, err := GetDB().Query(query, DEFAULT_SELECT_LIMIT, offset)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
+
+	log.Printf("[INFO] Queried all submissions with limit of %d, offset of %d\n", DEFAULT_SELECT_LIMIT, offset)
 
 	var submissions []Submission
 	for rows.Next() {
@@ -355,6 +390,9 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 
 		submissions = append(submissions, current)
 	}
+
+	log.Printf("[INFO] Query resulted in %d submissions\n", len(submissions))
+
 
 	return submissions
 }
@@ -384,6 +422,8 @@ func LatestUserSubmissions(offset int, user User) []BasicSubmission {
 		submissions = append(submissions, current)
 	}
 
+	log.Printf("[INFO] Latest user submissions query for %s resulted in %d, using a limit of %d\n", user.Username, len(submissions), offset)
+
 	return submissions
 }
 
@@ -400,6 +440,8 @@ func CreateSubmission(submission Submission) string {
 		log.Fatal(err)
 	}
 
+	log.Printf("[INFO] New submission authored by %s with ID %s created\n", submission.Username, id)
+
 	return id
 }
 
@@ -412,6 +454,8 @@ func UpdateSubmission(stub Submission) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("[INFO] Updated submission %s\n", stub.Id)
 }
 
 // true on success (new insert or update)
@@ -438,6 +482,16 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		var voteType string
+		if isUpvote {
+			voteType = "upvote"
+		} else {
+			voteType = "downvote"
+		}
+
+		log.Printf("[INFO] Inserted new %s for post ID %s from %s\n", voteType, submission.Id, user.Username)
+		
 		return true
 	} else if err != nil {
 		log.Fatal(err)
@@ -446,6 +500,7 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 	// if we hit this point, a record was found, and now we just need to update it
 	// "can't vote twice"
 	if isUpvote == wasPositive {
+		log.Printf("[INFO] Double vote attempted by %s\n", user.Username)
 		return false
 	}
 
@@ -453,6 +508,16 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var updated string
+
+	if isUpvote {
+		updated = "downvote to upvote"
+	} else {
+		updated = "upvote to downvote"
+	}
+
+	log.Printf("[INFO] Updated vote from a %s by user %s\n", updated, user.Username)
 
 	return true
 }
@@ -473,13 +538,24 @@ func GetUserVote(user User, submission Submission) (bool, bool) {
 	err := GetDB().QueryRow("SELECT positive FROM votes WHERE voter_username = $1 AND submission_id = $2", user.Username, submission.Id).Scan(&didUpvote)
 
 	if err == sql.ErrNoRows {
-		fmt.Printf("No upvote found for user %s on post %s\n", user.Username, submission.Id)
+		fmt.Printf("[INFO] No vote found for user %s on post %s\n", user.Username, submission.Id)
 		return false, false
 	}
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var voteType string
+
+	// i am PRAYING the next golang update includes ternaries
+	if didUpvote {
+		voteType = "upvote"
+	} else {
+		voteType = "downvote"
+	}
+
+	log.Printf("[INFO] Search found a %s on post %s by user %s\n", voteType, submission.Id, user.Username)
 
 	return true, didUpvote
 }
@@ -523,6 +599,8 @@ func GetAllUserVotes(user User) []BasicSubmissionAndVote {
 		submissions = append(submissions, current)
 	}
 
+	log.Printf("[INFO] Query for all user votes on user %s resulted in %d voted posts, w/ limit of %d\n", user.Username, len(submissions), DEFAULT_SELECT_LIMIT)
+
 	return submissions
 }
 
@@ -549,6 +627,14 @@ func CreateMagicLink(user User) string {
 		log.Fatal(err)
 	}
 
+	// given a string 's'
+	// len(s) --> returns the length of ASCII code
+	// len([]rune(s)) --> returns the length of char count in string
+	
+	// []rune() returns an array of ascii values for each char in a string
+
+	log.Printf("[INFO] Magic link for username %s and email %s created, length %d", user.Username, user.Email, len([]rune(token)))
+
 	return token
 }
 
@@ -557,6 +643,8 @@ func DeleteMagicLink(token string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("[INFO] Magic link for of length %d deleted", len([]rune(token)))
 }
 
 func ValidateMagicLink(token string, ip string) User {
@@ -569,10 +657,10 @@ func ValidateMagicLink(token string, ip string) User {
 
 	err := GetDB().QueryRow("SELECT username, email FROM magic_links WHERE token = $1", token).Scan(&username, &email)
 
-	fmt.Printf("Database search found user %s and email %s for token %s\n", username, email, token)
+	fmt.Printf("[INFO] Magic link search found user %s and email %s for token of length %d\n", username, email, len([]rune(token)))
 
 	if err == sql.ErrNoRows {
-		fmt.Printf("No user found for token: %s\n", token)
+		fmt.Printf("[WARN] Magic link search found no user for token length %d\n", len([]rune(token)))
 		// Empty user = invalid token
 		return User{}
 	}
@@ -585,11 +673,7 @@ func ValidateMagicLink(token string, ip string) User {
 		log.Fatal("Registration IP address required")
 	}
 
-	fmt.Println("About to delete magic link")
 	DeleteMagicLink(token)
-	fmt.Println("Deleted magic link")
-
-	fmt.Println("Checking if we need to insert a new user into the database")
 
 	// determine if we need to insert the user into the database or not
 	var searchedUser User = SearchUser(User{Username: username}).User
@@ -597,13 +681,15 @@ func ValidateMagicLink(token string, ip string) User {
 	if searchedUser.Username == "" {
 		var toInsert User = User{Username: username, Email: email, Registered_ip: ip}
 		CreateUser(toInsert)
-		fmt.Println("Inserted new user into the database")
+		fmt.Printf("[INFO] User %s registration via magic link completed\n", username)
 		return toInsert
 	} else {
+		fmt.Printf("[INFO] User %s login via magic link completed\n", username)
 		return searchedUser
 	}
 }
 
+// in the future make this into a single query, rather than counting positive, then negative votes
 func CountVotes(post Submission) (VoteMetrics, error) {
 	if post.Id == "" {
 		return VoteMetrics{}, fmt.Errorf("cannot query votes with a blank submission ID")
@@ -616,10 +702,14 @@ func CountVotes(post Submission) (VoteMetrics, error) {
 		return VoteMetrics{}, fmt.Errorf("error from SQL: %s", err)
 	}
 
+	fmt.Printf("[INFO] %d upvotes counted for submission ID %s\n", upvotes, post.Id)
+
 	err = GetDB().QueryRow("SELECT count(*) as ct FROM votes WHERE submission_id = $1 AND positive = $2", post.Id, false).Scan(&downvotes)
 	if err != nil {
 		return VoteMetrics{}, fmt.Errorf("error from SQL: %s", err)
 	}
+
+	fmt.Printf("[INFO] %d downvotes counted for submission ID %s\n", downvotes, post.Id)
 
 	return VoteMetrics{Upvotes: upvotes, Downvotes: downvotes}, nil
 }

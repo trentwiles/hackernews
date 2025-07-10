@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 
 	// my packages
 	"github.com/trentwiles/hackernews/internal/captcha"
@@ -65,6 +66,9 @@ func main() {
 	// create web app
 	app := fiber.New()
 	app.Use(cors.New())
+	app.Use(logger.New())
+
+	log.Println("[INFO] Started webserver with CORS & Logging middleware")
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
