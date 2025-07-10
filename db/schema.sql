@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS votes (
     voter_username VARCHAR(100) NOT NULL,
     ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     positive BOOLEAN NOT NULL, -- true = upvote, false = downvote
-    FOREIGN KEY (submission_id) REFERENCES submissions(id),
-    FOREIGN KEY (voter_username) REFERENCES users(username)
+    FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
+    FOREIGN KEY (voter_username) REFERENCES users(username) ON DELETE CASCADE
 );
 
 -- note: use a recursive query to build a comment chain (via self join)

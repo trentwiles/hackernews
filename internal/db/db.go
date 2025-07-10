@@ -305,9 +305,11 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 	}
 
 	query := `
-			SELECT submissions.id, username, title, link, body, created_at, SUM(CASE 
-					WHEN positive = true THEN 1 
-					ELSE -1 
+			SELECT submissions.id, username, title, link, body, created_at, 
+				SUM(CASE 
+					WHEN votes.positive = true THEN 1 
+					WHEN votes.positive = false THEN -1 
+					ELSE 0 
 				END) AS score
 			FROM submissions
 			LEFT JOIN votes ON submissions.id = votes.submission_id
@@ -315,6 +317,8 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 			GROUP BY submissions.id
 			` + order + `
 			LIMIT $1 OFFSET $2`
+
+	fmt.Println(offset)
 
 	rows, err := GetDB().Query(query, DEFAULT_SELECT_LIMIT, offset)
 	if err != nil {
