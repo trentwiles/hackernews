@@ -11,6 +11,7 @@ import Submission from "./components/Submission";
 import UserRedirect from "./components/UserRedirect";
 import Logout from "./components/Logout";
 import Settings from "./components/Settings";
+import Search from "./components/Search";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/u/" element={<UserRedirect />} />
             <Route path="/account/submissions" element={<UserRedirect />} />
             <Route path="/submission/:sid" element={<Submission />} />
+            <Route path="/search" element={<Search />} />
 
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}
             <Route
