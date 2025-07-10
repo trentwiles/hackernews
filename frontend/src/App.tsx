@@ -10,6 +10,7 @@ import User from "./components/User";
 import Submission from "./components/Submission";
 import UserRedirect from "./components/UserRedirect";
 import Logout from "./components/Logout";
+import Settings from "./components/Settings";
 
 function App() {
   return (
@@ -40,6 +41,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Submit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />
