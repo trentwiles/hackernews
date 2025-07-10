@@ -49,6 +49,9 @@ func SendEmail(email Email) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// golang note: since message is a byte array, there's no need to convert to a rune
+	log.Printf("[INFO] Sent plaintext email to %s with msg length of %d\n", to, len(message))
 }
 
 func SendEmailTemplate(magic MagicLinkEmail) {
@@ -85,4 +88,6 @@ func SendEmailTemplate(magic MagicLinkEmail) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("[INFO] Sent HTML email to %s with content length of %d\n", to, len(message))
 }

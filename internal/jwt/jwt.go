@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,8 +14,8 @@ func GenerateJWT(username string, expiresIn int) (string, error) {
 	config.LoadEnv()
 	claims := jwt.MapClaims{
 		"username": username,
-		"nbf": time.Now().Add(-1 * time.Minute).Unix(), // Valid starting 1 minute ago
-		"exp": time.Now().Add(time.Duration(expiresIn) * time.Minute).Unix(),  // Expires in 5 minutes
+		"nbf":      time.Now().Add(-1 * time.Minute).Unix(),                       // Valid starting 1 minute ago
+		"exp":      time.Now().Add(time.Duration(expiresIn) * time.Minute).Unix(), // Expires in 5 minutes
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -81,7 +82,11 @@ func ParseAuthHeader(header string) (bool, string) {
 		return false, ""
 	}
 
-	fmt.Printf("token for username %s parsed", username)
+	if username != "" {
+		log.Printf("[INFO] Token length %d for username %s parsed by backend\n", len([]rune(token)), username)
+	} else {
+		log.Printf("[WARN] Attempted to parse JWT token of length %d, no username retrived\n", len([]rune(token)))
+	}
 
 	return (username != ""), username
 }

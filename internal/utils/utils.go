@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// future: include logging on these? probably not, it would clutter the console...
+
 func IsValidEmail(email string) bool {
 	email = strings.TrimSpace(email)
 	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
