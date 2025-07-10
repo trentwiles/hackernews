@@ -1,6 +1,6 @@
 "use client";
 import Cookies from "js-cookie";
-import { CirclePlus, Command, FileStack, ListFilterPlus, LogIn, Trophy } from "lucide-react";
+import { CirclePlus, Command, FileStack, ListFilterPlus, LogIn, Search, Settings, Trophy } from "lucide-react";
 import {
   Sidebar,
   SidebarGroup,
@@ -102,6 +102,16 @@ export default function WebSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* SEARCH BUTTON */}
+              <SidebarMenuItem key={"search"}>
+                <SidebarMenuButton asChild>
+                  <Link to="/search">
+                    <Search />
+                    <span>Search</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -126,6 +136,16 @@ export default function WebSidebar() {
                   <Link to="/account/submissions">
                     <FileStack />
                     <span>My Submissions</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* SETTINGS BUTTON */}
+              <SidebarMenuItem key={"settings"}>
+                <SidebarMenuButton asChild>
+                  <Link to="/account/settings">
+                    <Settings />
+                    <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

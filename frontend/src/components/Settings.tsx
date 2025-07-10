@@ -25,12 +25,52 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-function formatDate(isoDateStr: string): string {
-  const date = new Date(isoDateStr);
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const year = date.getUTCFullYear();
+type FormData = {
+  dateOfBirth: Date | undefined;
+  fullName: string;
+  body: string;
+  agreeToTerms: boolean;
+};
+
+// converts the Date object provided by the shadcn calendar
+// into a string format (MM-DD-YYYY) that the backend (aka postgres)
+// can understand
+function formatDateForBackend(date: Date | undefined): string {
+  if (!date) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
   return `${month}-${day}-${year}`;
+}
+
+// postgres returns an ISO string by default
+// this code converts that iso string into a format that the ShadCN calendar
+// can read and then display to the user
+// (also provides support for other non-ISO formats for backwards compatability)
+function parseBackendDate(dateStr: string | undefined): Date | undefined {
+  if (!dateStr) return undefined;
+  
+  if (dateStr.includes('T')) {
+    const datePart = dateStr.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(n => parseInt(n, 10));
+    
+    return new Date(year, month - 1, day, 12, 0, 0);
+  }
+  
+  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const [year, month, day] = dateStr.split('-').map(n => parseInt(n, 10));
+    return new Date(year, month - 1, day, 12, 0, 0);
+  }
+  
+  if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
+    const [month, day, year] = dateStr.split('-').map(n => parseInt(n, 10));
+    return new Date(year, month - 1, day, 12, 0, 0);
+  }
+  
+  console.error("Unable to parse date:", dateStr);
+  return undefined;
 }
 
 export default function Settings() {
@@ -43,12 +83,12 @@ export default function Settings() {
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<FormData>({
     defaultValues: {
       dateOfBirth: undefined,
       fullName: "",
       body: "",
-      agreeToTerms: false,
+      agreeToTerms: false, // legacy as I copied from Submission.tsx, should remove at some point
     },
   });
 
@@ -63,7 +103,7 @@ export default function Settings() {
       },
       body: JSON.stringify({
         fullName: data.fullName,
-        birthdate: formatDate(data.dateOfBirth),
+        birthdate: formatDateForBackend(data.dateOfBirth),
         bioText: data.body,
       }),
     })
@@ -83,32 +123,36 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/v1/me", {
-      headers: {
-        Authorization: "Bearer " + Cookies.get("token"),
-      },
+  fetch("http://localhost:3000/api/v1/me", {
+    headers: {
+      Authorization: "Bearer " + Cookies.get("token"),
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+      return response.json();
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setValue("fullName", data.metadata.full_name);
-        setValue("body", data.metadata.bio);
-        setValue("dateOfBirth", data.metadata.birthday);
+    .then((data) => {
+      setValue("fullName", data.metadata.full_name);
+      setValue("body", data.metadata.bio);
+      
+      // Parse the date properly
+      if (data.metadata.birthday) {
+        setValue("dateOfBirth", parseBackendDate(data.metadata.birthday));
+      }
 
-        setSubmitButtonText("Saved!")
-        setTimeout(() => {
-            setSubmitButtonText("Submit")
-        }, 1000)
-      })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setSubmitButtonText("Error Saving")
-      });
-  }, [reloads]);
+      setSubmitButtonText("Saved!")
+      setTimeout(() => {
+        setSubmitButtonText("Submit")
+      }, 1000)
+    })
+    .catch((err) => {
+      console.error("Fetch error:", err);
+      setSubmitButtonText("Error Saving")
+    });
+}, [reloads]);
 
   return (
     <SidebarProvider>

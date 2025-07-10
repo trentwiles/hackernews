@@ -111,6 +111,8 @@ export function LoginForm({
                     placeholder="Alice"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    pattern="^\S+$"
+                    title="Username cannot contain spaces"
                     required
                   />
                 </div>
