@@ -35,7 +35,7 @@ export default function MagicLink(props: MagicLinkProps) {
       return
     }
 
-    fetch("http://localhost:3000/api/v1/magic?token=" + token)
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/magic?token=" + token)
       .then((response) => {
         // Check if the response is ok (status 200-299)
         if (!response.ok) {

@@ -95,7 +95,7 @@ export default function Settings() {
   const onSubmit = async (data) => {
     console.log("Form submitted:", data);
 
-    fetch("http://localhost:3000/api/v1/bio", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/bio", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

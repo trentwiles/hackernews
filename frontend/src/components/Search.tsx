@@ -35,7 +35,7 @@ export default function Search() {
 
     window.history.replaceState({}, '', '?q=' + query);
 
-    fetch("http://127.0.0.1:3000/api/v1/searchSubmissions?q=" + query)
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/searchSubmissions?q=" + query)
       .then((response) => {
         if (response.status != 200) {
           throw new Error("non-200 HTTP status");

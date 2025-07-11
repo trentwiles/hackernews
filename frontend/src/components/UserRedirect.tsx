@@ -11,7 +11,7 @@ export default function UserRedirect() {
       return;
     }
 
-    fetch("http://localhost:3000/api/v1/me", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/me", {
       headers: {
         Authorization: "Bearer " + Cookies.get("token"),
       },

@@ -47,7 +47,7 @@ export function LoginForm({
 
     const token = await executeRecaptcha("login");
 
-    fetch("http://localhost:3000/api/v1/login", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

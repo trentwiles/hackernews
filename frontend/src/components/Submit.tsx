@@ -46,7 +46,7 @@ export default function Submit() {
       return;
     }
     const timeoutId = setTimeout(() => {
-      fetch("http://127.0.0.1:3000/api/v1/fetchWebsiteTitle?url=" + linkValue) // Replace with your actual endpoint
+      fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/fetchWebsiteTitle?url=" + linkValue) // Replace with your actual endpoint
         .then((res) => {
           if (res.status !== 200) {
             throw new Error("non-200 status: " + res.status)

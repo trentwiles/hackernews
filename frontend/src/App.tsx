@@ -14,6 +14,7 @@ import Settings from "./components/Settings";
 import Search from "./components/Search";
 
 function App() {
+  console.log(import.meta.env)
   return (
     <GoogleReCaptchaProvider reCaptchaKey="6LcopnUrAAAAACZBUINoyS__gkqGOTm-Nj4qhIm1">
       <Router>

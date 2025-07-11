@@ -56,7 +56,7 @@ export default function User() {
   const [votedPosts, setVotedPosts] = useState<votedPost[]>();
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/v1/user?username=" + username)
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/user?username=" + username)
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");

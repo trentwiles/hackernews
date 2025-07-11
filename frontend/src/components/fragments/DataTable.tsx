@@ -56,7 +56,7 @@ export default function DataTable(props: props) {
     setIsPending(true);
     setIsError(false);
 
-    fetch("http://localhost:3000" + buildNextFetch(filter, offset))
+    fetch(import.meta.env.VITE_API_ENDPOINT + buildNextFetch(filter, offset))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Network response was not ok");

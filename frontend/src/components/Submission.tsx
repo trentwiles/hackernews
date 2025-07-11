@@ -61,7 +61,7 @@ export default function Submission() {
       return;
     }
 
-    fetch("http://localhost:3000/api/v1/submission?id=" + sid)
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/submission?id=" + sid)
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");
