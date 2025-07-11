@@ -393,7 +393,6 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 
 	log.Printf("[INFO] Query resulted in %d submissions\n", len(submissions))
 
-
 	return submissions
 }
 
@@ -491,7 +490,7 @@ func Vote(user User, submission Submission, isUpvote bool) bool {
 		}
 
 		log.Printf("[INFO] Inserted new %s for post ID %s from %s\n", voteType, submission.Id, user.Username)
-		
+
 		return true
 	} else if err != nil {
 		log.Fatal(err)
@@ -630,7 +629,7 @@ func CreateMagicLink(user User) string {
 	// given a string 's'
 	// len(s) --> returns the length of ASCII code
 	// len([]rune(s)) --> returns the length of char count in string
-	
+
 	// []rune() returns an array of ascii values for each char in a string
 
 	log.Printf("[INFO] Magic link for username %s and email %s created, length %d", user.Username, user.Email, len([]rune(token)))
@@ -657,10 +656,10 @@ func ValidateMagicLink(token string, ip string) User {
 
 	err := GetDB().QueryRow("SELECT username, email FROM magic_links WHERE token = $1", token).Scan(&username, &email)
 
-	fmt.Printf("[INFO] Magic link search found user %s and email %s for token of length %d\n", username, email, len([]rune(token)))
+	log.Printf("[INFO] Magic link search found user %s and email %s for token of length %d\n", username, email, len([]rune(token)))
 
 	if err == sql.ErrNoRows {
-		fmt.Printf("[WARN] Magic link search found no user for token length %d\n", len([]rune(token)))
+		log.Printf("[WARN] Magic link search found no user for token length %d\n", len([]rune(token)))
 		// Empty user = invalid token
 		return User{}
 	}
@@ -681,10 +680,10 @@ func ValidateMagicLink(token string, ip string) User {
 	if searchedUser.Username == "" {
 		var toInsert User = User{Username: username, Email: email, Registered_ip: ip}
 		CreateUser(toInsert)
-		fmt.Printf("[INFO] User %s registration via magic link completed\n", username)
+		log.Printf("[INFO] User %s registration via magic link completed\n", username)
 		return toInsert
 	} else {
-		fmt.Printf("[INFO] User %s login via magic link completed\n", username)
+		log.Printf("[INFO] User %s login via magic link completed\n", username)
 		return searchedUser
 	}
 }
@@ -702,14 +701,70 @@ func CountVotes(post Submission) (VoteMetrics, error) {
 		return VoteMetrics{}, fmt.Errorf("error from SQL: %s", err)
 	}
 
-	fmt.Printf("[INFO] %d upvotes counted for submission ID %s\n", upvotes, post.Id)
+	log.Printf("[INFO] %d upvotes counted for submission ID %s\n", upvotes, post.Id)
 
 	err = GetDB().QueryRow("SELECT count(*) as ct FROM votes WHERE submission_id = $1 AND positive = $2", post.Id, false).Scan(&downvotes)
 	if err != nil {
 		return VoteMetrics{}, fmt.Errorf("error from SQL: %s", err)
 	}
 
-	fmt.Printf("[INFO] %d downvotes counted for submission ID %s\n", downvotes, post.Id)
+	log.Printf("[INFO] %d downvotes counted for submission ID %s\n", downvotes, post.Id)
 
 	return VoteMetrics{Upvotes: upvotes, Downvotes: downvotes}, nil
+}
+
+func SearchSubmissionByQuery(query string, offset int) []Submission {
+	if offset < 0 {
+		log.Printf("[WARN] Offset in SearchSubmissionByQuery %d is <0, set to 0\n", offset)
+		offset = 0
+	}
+
+	if query == "" {
+		log.Printf("[WARN] Unable to search for a blank query. Returning empty list.\n")
+		return []Submission{}
+	}
+
+	q := `
+		SELECT * FROM submissions
+		WHERE flagged = false
+		AND (title ILIKE $1 OR body ILIKE $1)
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := GetDB().Query(q, "%"+query+"%", DEFAULT_SELECT_LIMIT, offset)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    // username VARCHAR(100) NOT NULL,
+    // title VARCHAR(255) NOT NULL,
+    // link VARCHAR(255) NOT NULL,
+    // body TEXT,
+    // -- optional body text (when you visit a submission page on HN, sometimes there will be additonal text)
+    // flagged BOOLEAN DEFAULT FALSE,
+    // created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+	var resultList []Submission
+	var tempResult Submission
+	for rows.Next() {
+		var tempBody sql.NullString
+
+		err := rows.Scan(&tempResult.Id, &tempResult.Username, &tempResult.Title, &tempResult.Link, &tempBody, &tempResult.Flagged, &tempResult.Created_at)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if tempBody.String != "" {
+			tempResult.Body = tempBody.String
+		} else{
+			tempResult.Body = ""
+		}
+
+		resultList = append(resultList, tempResult)
+	}
+
+	log.Printf("[INFO] Submission search query returned %d results, with a limit of %d\n", len(resultList), DEFAULT_SELECT_LIMIT)
+
+	return resultList
 }

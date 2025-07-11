@@ -10,10 +10,9 @@
 - Submission Posting (with full Google Captcha v3 support)
 - Submission Voting (upvotes/downvotes, options to sort by votes)
 - User bio/birthday/full name customization on "account settings" page
+- Command line logging (HTTP request logging + logging from business logic files)
 
 ### In Progress
-
-- Command line logging (clean up what we currently have)
 - Basic admin page (basic website metrics)
 - Name change!
 
@@ -72,3 +71,5 @@ HTTP request logging is done by a built in middleware for Fiber. Other logs are 
 | `[INFO]`  | Basic event, not very important                                  |
 | `[WARN]`  | Some sort of failure took place, wasn't fatal                    |
 | `[FATAL]` | Error that killed the program took place, pay attention to these |
+
+Future: toggle logging via `.env` (`PRODUCTION=true`), see this [ChatGPT conversion](https://chatgpt.com/share/68701ac1-5848-800a-9325-aea6489727a8) for more on that.

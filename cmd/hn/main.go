@@ -642,6 +642,41 @@ func main() {
 
 	})
 
+	app.Get(version+"/searchSubmissions", func(c *fiber.Ctx) error {
+		// success, _ := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		// if !success {
+		// 	return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		// }
+
+		q := c.Query("q")
+		if q == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Please pass a `q` parameter",
+			})
+		}
+
+		page := c.Query("page")
+		if page == "" {
+			page = "0"
+		}
+
+		pageInt, err := strconv.Atoi(page)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "`page` parse error: " + err.Error(),
+			})
+		}
+
+		var offset int = pageInt * db.DEFAULT_SELECT_LIMIT
+
+		query := db.SearchSubmissionByQuery(q, offset)
+
+		return c.JSON(fiber.Map{
+			"results": query,
+		})
+	})
+
 	// 404
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Route not found", "status": 404})
