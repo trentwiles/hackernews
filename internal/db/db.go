@@ -736,15 +736,6 @@ func SearchSubmissionByQuery(query string, offset int) []Submission {
 		log.Fatal(err)
 	}
 
-	// id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    // username VARCHAR(100) NOT NULL,
-    // title VARCHAR(255) NOT NULL,
-    // link VARCHAR(255) NOT NULL,
-    // body TEXT,
-    // -- optional body text (when you visit a submission page on HN, sometimes there will be additonal text)
-    // flagged BOOLEAN DEFAULT FALSE,
-    // created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
 	var resultList []Submission
 	var tempResult Submission
 	for rows.Next() {

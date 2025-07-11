@@ -1,9 +1,75 @@
+import { getDomain, truncate } from "@/utils";
 import WebSidebar from "./fragments/WebSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Search as SearchIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+type submission = {
+  id: string;
+  username: string;
+  title: string;
+  link: string;
+  body: string;
+  created_at: string;
+};
+
 export default function Search() {
+  const [query, setQuery] = useState<string>("");
+  const [results, setResults] = useState<submission[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q !== null && q != "") {
+      setQuery(q)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (query == "") {
+      console.log("Note: no query in search box. Exiting useEffect");
+      window.history.replaceState({}, '', '/search');
+      return;
+    }
+
+    window.history.replaceState({}, '', '?q=' + query);
+
+    fetch("http://127.0.0.1:3000/api/v1/searchSubmissions?q=" + query)
+      .then((response) => {
+        if (response.status != 200) {
+          throw new Error("non-200 HTTP status");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.results == null) {
+          setResults([]);
+          return;
+        }
+
+        const ls: submission[] = [];
+        data.results.map((res) => {
+          console.log(res);
+          const tempResult: submission = {
+            id: res.Id,
+            body: res.Body,
+            created_at: res.Created_at,
+            link: res.Link,
+            title: res.Title,
+            username: res.Username,
+          };
+
+          ls.push(tempResult);
+        });
+
+        setResults(ls);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [query]);
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -20,7 +86,8 @@ export default function Search() {
                 type="text"
                 className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Search for anything..."
-                defaultValue="React components"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
               />
             </div>
 
@@ -29,42 +96,50 @@ export default function Search() {
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
                 Search Results
               </h2>
+              <p className="text-sm text-muted-foreground mt-5">
+                {results.length !== 0 &&
+                  `${results.length} result${
+                    results.length === 1 ? "" : "s found"
+                  }`}
+                {results.length === 0 &&
+                  query !== "" &&
+                  `No results found for query '${query}'`}
+              </p>
 
-              {/* Result 1, clone this in a .map or .forEach */}
-              <div className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg hover:underline">
-                      <a
-                        href="https://react.dev/learn/your-first-component"
-                        target="_blank"
-                      >
-                        Getting Started with React Components
-                      </a>
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Components are one of the core concepts of React. They are
-                      the foundation upon which you build user interfaces (UI),
-                      which makes them the perfect place to start your React
-                      journey...
-                    </p>
-                    <div className="flex gap-3 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
-                        <a
-                          href="https://react.dev/learn/your-first-component"
-                          target="_blank"
-                        >
-                          react.dev
-                        </a>
-                      </span>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
-                        <Link to="/u/trent">u/trent</Link>
-                      </span>
-                      <span>2 days ago</span>
+              {/* Result list */}
+              {results.length !== 0 &&
+                results.map((res, idx) => (
+                  <div className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer" key={idx}>
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-lg hover:underline">
+                          <Link
+                            to={"/submission/" + res.id}
+                          >
+                            {res.title}
+                          </Link>
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {truncate(res.body)}
+                        </p>
+                        <div className="flex gap-3 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
+                            <a
+                              href={res.link}
+                              target="_blank"
+                            >
+                              {getDomain(res.link)}
+                            </a>
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
+                            <Link to={`/u/${res.username}`}>u/{res.username}</Link>
+                          </span>
+                          <span>2 days ago</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                ))}
             </div>
           </div>
         </SidebarInset>

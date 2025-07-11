@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { datePrettyPrint, getTimeAgo } from "@/utils";
+import { datePrettyPrint, getTimeAgo, truncate } from "@/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -29,16 +29,6 @@ type Submission = {
   Created_at: string;
 };
 
-function truncate(
-  str: string,
-  maxLength: number = 40,
-  suffix: string = "..."
-): string {
-  if (str.length <= maxLength) {
-    return str;
-  }
-  return str.slice(0, maxLength - suffix.length) + suffix;
-}
 
 function buildNextFetch(filter: string, offset: number): string {
   return `/api/v1/all?sort=${filter}&offset=${offset}`;

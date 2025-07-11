@@ -52,3 +52,24 @@ export function getTimeAgo(dateString: string): string {
     return `${years} year${years !== 1 ? "s" : ""} ago`;
   }
 }
+
+export function truncate(
+  str: string,
+  maxLength: number = 40,
+  suffix: string = "..."
+): string {
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return str.slice(0, maxLength - suffix.length) + suffix;
+}
+
+export function getDomain(url: string): string {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname;
+  } catch {
+    console.error("getDomain: unable to parse out domain");
+    return "";
+  }
+}
