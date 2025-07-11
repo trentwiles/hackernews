@@ -68,16 +68,18 @@ func main() {
 	app.Use(cors.New())
 	app.Use(logger.New())
 
+	app.Static("/", "./static")
+
 	log.Println("[INFO] Started webserver with CORS & Logging middleware")
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+	// app.Get("/", func(c *fiber.Ctx) error {
+	// 	success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
 
-		if !success {
-			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
-		}
-		return c.JSON(BasicResponse{Message: "Logged in as " + username, Status: 200})
-	})
+	// 	if !success {
+	// 		return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+	// 	}
+	// 	return c.JSON(BasicResponse{Message: "Logged in as " + username, Status: 200})
+	// })
 
 	app.Post(version+"/login", func(c *fiber.Ctx) error {
 		var req LoginRequest
@@ -683,5 +685,5 @@ func main() {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Route not found", "status": 404})
 	})
 
-	app.Listen("127.0.0.1:3000")
+	app.Listen("0.0.0.0:30000")
 }
