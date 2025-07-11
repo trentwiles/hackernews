@@ -465,6 +465,7 @@ func main() {
 				"birthday":  userMetadata.Birthdate,
 				"bio":       userMetadata.Bio_text,
 				"isAdmin":   userMetadata.IsAdmin,
+				"score": user.Score,
 			},
 		})
 	})

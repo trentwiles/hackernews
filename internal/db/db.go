@@ -26,6 +26,7 @@ type User struct {
 	Email         string
 	Created_at    string
 	Registered_ip string
+	Score         int
 }
 
 type UserMetadata struct {
@@ -197,18 +198,53 @@ func SearchUser(user User) CompleteUser {
 		log.Fatal("To select a user, you must be either an email or username")
 	}
 
+	// username VARCHAR(100) PRIMARY KEY,
+	// email VARCHAR(100) NOT NULL,
+	// created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	// registered_ip
+
+	qUsername := `
+	SELECT users.username, users.email, users.created_at, users.registered_ip,
+				SUM(CASE 
+					WHEN votes.positive = true THEN 1 
+					WHEN votes.positive = false THEN -1 
+					ELSE 0 
+				END) AS score
+	FROM users
+	LEFT JOIN submissions ON users.username = submissions.username
+	LEFT JOIN votes ON submissions.id = votes.submission_id
+	WHERE users.username = $1
+	GROUP BY users.username
+	LIMIT 1
+	`
+
+	qEmail := `
+	SELECT users.username, users.email, users.created_at, users.registered_ip,
+				SUM(CASE 
+					WHEN votes.positive = true THEN 1 
+					WHEN votes.positive = false THEN -1 
+					ELSE 0 
+				END) AS score
+	FROM users
+	LEFT JOIN submissions ON users.username = submissions.username
+	LEFT JOIN votes ON submissions.id = votes.submission_id
+	WHERE users.email = $1
+	GROUP BY users.username
+	LIMIT 1
+	`
+
 	var rows *sql.Rows
 	var err error
 
 	if user.Username != "" {
-		rows, err = GetDB().Query("SELECT * FROM users WHERE username = $1", user.Username)
+		rows, err = GetDB().Query(qUsername, user.Username)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		log.Printf("[INFO] Queried user %s via username\n", user.Username)
 	} else {
-		rows, err = GetDB().Query("SELECT * FROM users WHERE email = $1", user.Email)
+		rows, err = GetDB().Query(qEmail, user.Email)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -218,7 +254,7 @@ func SearchUser(user User) CompleteUser {
 
 	var tempUser = User{}
 	for rows.Next() {
-		err := rows.Scan(&tempUser.Username, &tempUser.Email, &tempUser.Created_at, &tempUser.Registered_ip)
+		err := rows.Scan(&tempUser.Username, &tempUser.Email, &tempUser.Created_at, &tempUser.Registered_ip, &tempUser.Score)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -748,7 +784,7 @@ func SearchSubmissionByQuery(query string, offset int) []Submission {
 
 		if tempBody.String != "" {
 			tempResult.Body = tempBody.String
-		} else{
+		} else {
 			tempResult.Body = ""
 		}
 

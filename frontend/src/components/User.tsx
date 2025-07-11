@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { Cake, CalendarDays, User as UserIcon } from "lucide-react";
+import { Cake, CalendarDays, Sparkle, User as UserIcon } from "lucide-react";
 import CryptoJS from "crypto-js";
 import {
   Tooltip,
@@ -27,6 +27,7 @@ type user = {
   birthday: string;
   full_name: string;
   username: string;
+  score: number;
 };
 
 type basicSubmission = {
@@ -72,6 +73,7 @@ export default function User() {
           full_name: data.metadata.full_name,
           username: data.username,
           joined: data.joined,
+          score: data.metadata.score
         };
 
         setCurrentUser(current);
@@ -218,6 +220,10 @@ export default function User() {
                           </Tooltip>
                         </div>
                       )}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Sparkle className="w-4 h-4" />
+                          {currentUser.score} karma
+                        </div>
                     </CardContent>
                   </Card>
                 </div>
