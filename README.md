@@ -11,6 +11,7 @@
 - Submission Voting (upvotes/downvotes, options to sort by votes)
 - User bio/birthday/full name customization on "account settings" page
 - Command line logging (HTTP request logging + logging from business logic files)
+- `.env` config files used on frontend & backend
 
 ### In Progress
 - Basic admin page (basic website metrics)
@@ -22,7 +23,6 @@
 
 - Comments (and comment threads)
 - Ability to report a post (and maybe a user?)
-- `.env` usage on the frontend
 - Fully working admin page (view/delete flagged posts, delete users, view full website metrics)
 - Clean up error handling (mostly using Log.fatal now, not great for production as this kills the program)
 

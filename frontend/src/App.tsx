@@ -14,7 +14,14 @@ import Settings from "./components/Settings";
 import Search from "./components/Search";
 
 function App() {
-  console.log(import.meta.env)
+  const REQUIRED_ENV_VARS: string[] = ["VITE_API_ENDPOINT"];
+
+  REQUIRED_ENV_VARS.map((envVar) => {
+    if (import.meta.env[envVar] === undefined) {
+      throw new Error("unable to find required .env variable: " + envVar);
+    }
+  });
+
   return (
     <GoogleReCaptchaProvider reCaptchaKey="6LcopnUrAAAAACZBUINoyS__gkqGOTm-Nj4qhIm1">
       <Router>
@@ -26,7 +33,7 @@ function App() {
             <Route path="/top" element={<Home sortType="best" />} />
 
             <Route path="/login" element={<Login serviceName="HackerNews" />} />
-            <Route path="/logout" element={<Logout/>} />
+            <Route path="/logout" element={<Logout />} />
             <Route
               path="/magic"
               element={<MagicLink serviceName="HackerNews" />}
