@@ -31,6 +31,8 @@ services:
     restart: unless-stopped
     ports:
       - "30000:30000"
+    environment:
+      - POSTGRES_HOST=postgres # pass the network address of the postgres container, so Go can connect
     env_file:
       - ./.env
     depends_on:

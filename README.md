@@ -4,6 +4,10 @@
 
 ![](docs/design.svg)
 
+# Setup
+
+*See `docs/SETUP.md` for production and development setups.*
+
 # Versioning Goals
 
 ## Alpha (MVP, v0.1.0)
