@@ -1,4 +1,8 @@
-# hackernews
+# Hackernews Clone
+
+# (Production) Architecture
+
+![](docs/design.svg)
 
 # Versioning Goals
 
