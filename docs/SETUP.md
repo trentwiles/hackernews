@@ -1,5 +1,14 @@
 # Setup
 
+## Production
+```bash
+cp .env.example .env
+# edit the .env file in your favorite text editor
+
+docker compose up
+```
+
+## Development
 1. Enure Golang is installed. [More on this can be found on the Go website.](https://go.dev/doc/install)
 2. Copy the starter `.env` from `.env.example` to `.env` at the root. Edit the variables as needed.
     1. To generate a secure JWT signing token, you can use OpenSSL: `openssl rand -base64 64`
