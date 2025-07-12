@@ -88,7 +88,7 @@ export default function User() {
 
   useEffect(() => {
     setPending(true);
-    fetch("http://localhost:3000/api/v1/userSubmissions?username=" + username)
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/userSubmissions?username=" + username)
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");
@@ -110,7 +110,7 @@ export default function User() {
 
   useEffect(() => {
     setPending(true);
-    fetch("http://localhost:3000/api/v1/allUserVotes?username=" + username)
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/allUserVotes?username=" + username)
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");

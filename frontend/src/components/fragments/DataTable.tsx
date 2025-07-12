@@ -64,8 +64,13 @@ export default function DataTable(props: props) {
         return res.json();
       })
       .then((json) => {
-        const res: Submission[] = json.results;
-        setSubmission(res);
+        if (json.results == null) {
+          setSubmission([]);
+        }else{
+          const res: Submission[] = json.results;
+          setSubmission(res);
+        }
+        
         setIsPending(false);
       })
       .catch((err: Error) => {

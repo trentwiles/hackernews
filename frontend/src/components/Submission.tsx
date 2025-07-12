@@ -102,7 +102,7 @@ export default function Submission() {
 
   // set the vote button, if the user voted
   useEffect(() => {
-    fetch("http://localhost:3000/api/v1/vote?id=" + sid, {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/vote?id=" + sid, {
       headers: {
         Authorization: "Bearer " + Cookies.get("token"),
       },
@@ -139,7 +139,7 @@ export default function Submission() {
   }, [sid]);
 
   function deletePost() {
-    fetch("http://localhost:3000/api/v1/submission", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/submission", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export default function Submission() {
       setUpvoteEnabled(true);
     }
     // Id: req.Id}, req.Upvote
-    fetch("http://localhost:3000/api/v1/vote", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/vote", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

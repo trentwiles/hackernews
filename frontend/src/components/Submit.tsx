@@ -88,7 +88,7 @@ export default function Submit() {
 
     // req.CaptchaToken == "" || req.Link == "" || req.Title == ""
 
-    fetch("http://localhost:3000/api/v1/submit", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/submit", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -19,6 +19,7 @@ WORKDIR /app
 # Install ca-certificates for HTTPS requests
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 # Copy the binary
+COPY internal/templates/ ./internal/templates
 COPY --from=builder /app/server .
 COPY --from=frontend-builder /frontend/dist ./static
 EXPOSE 30000

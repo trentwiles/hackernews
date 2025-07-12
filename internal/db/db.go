@@ -101,9 +101,10 @@ func InitDB() error {
 	var err error
 	once.Do(func() {
 		config.LoadEnv()
-		connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable",
+		connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 			config.GetEnv("POSTGRES_USERNAME"),
 			config.GetEnv("POSTGRES_PASSWORD"),
+			config.GetEnv("POSTGRES_HOST"),
 			config.GetEnv("POSTGRES_DB"))
 
 		db, err = sql.Open("postgres", connStr)
