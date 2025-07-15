@@ -82,8 +82,8 @@ export default function WebSidebar() {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">HackerNews</span>
-                  <span className="truncate text-xs">v0.0.1</span>
+                  <span className="truncate font-medium">{import.meta.env.VITE_SERVICE_NAME}</span>
+                  <span className="truncate text-xs">{import.meta.env.VITE_VERSION || "Unknown Version"}</span>
                 </div>
               </a>
             </SidebarMenuButton>
