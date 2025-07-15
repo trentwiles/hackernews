@@ -13,6 +13,7 @@ func LoadEnv() {
         //log.Fatalf("Error loading .env file: %v\n", err)
         log.Printf("Error loading .env file: %v\n", err)
     }
+    log.Printf("Loaded .env file!\n")
 }
 
 func GetEnv(key string) string {

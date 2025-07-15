@@ -1,6 +1,11 @@
 "use client";
 
-import { BadgeCheck, ChevronsUpDown, Contact, LogOut } from "lucide-react";
+import {
+  BadgeCheck,
+  ChevronsUpDown,
+  Contact,
+  LogOut,
+} from "lucide-react";
 
 import CryptoJS from "crypto-js";
 
@@ -26,6 +31,7 @@ type props = {
   name: string;
   email: string;
   avatar: string;
+  isAdmin: boolean;
 };
 
 export default function NavUser(props: props) {
@@ -54,7 +60,9 @@ export default function NavUser(props: props) {
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{props.name}</span>
+                <span className="truncate font-medium inline-flex items-center gap-1">
+                  {props.name}
+                </span>
                 <span className="truncate text-xs">{props.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />

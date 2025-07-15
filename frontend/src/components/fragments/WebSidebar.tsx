@@ -1,6 +1,16 @@
 "use client";
 import Cookies from "js-cookie";
-import { CirclePlus, Command, FileStack, ListFilterPlus, LogIn, Search, Settings, Trophy } from "lucide-react";
+import {
+  CirclePlus,
+  Command,
+  FileStack,
+  ListFilterPlus,
+  LogIn,
+  Search,
+  Settings,
+  Shield,
+  Trophy,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarGroup,
@@ -26,6 +36,7 @@ type User = {
 export default function WebSidebar() {
   const [user, setUser] = useState<User>();
   const [isAuth, setIsAuth] = useState(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     if (Cookies.get("token") == undefined) {
@@ -52,6 +63,7 @@ export default function WebSidebar() {
           avatar: "/avatars/shadcn.jpg",
         };
         setUser(u);
+        setIsAdmin(json.metadata.isAdmin);
       })
       .catch((err: Error) => {
         console.error(err);
@@ -139,7 +151,13 @@ export default function WebSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup key={"User"}>
+          <SidebarGroupLabel>{"User"}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
               {/* SETTINGS BUTTON */}
               <SidebarMenuItem key={"settings"}>
                 <SidebarMenuButton asChild>
@@ -149,13 +167,25 @@ export default function WebSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* ADMIN BUTTON */}
+              {isAdmin && (
+                <SidebarMenuItem key={"admin"}>
+                  <SidebarMenuButton asChild>
+                    <Link to="/account/admin">
+                      <Shield />
+                      <span>Admin Panel</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         {isAuth && user != undefined && (
-          <NavUser avatar={user.avatar} email={user.email} name={user.name} />
+          <NavUser avatar={user.avatar} email={user.email} name={user.name} isAdmin={isAdmin} />
         )}
         {!isAuth && (
           <SidebarMenuItem key={"login"}>

@@ -11,7 +11,13 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { Cake, CalendarDays, Sparkle, User as UserIcon } from "lucide-react";
+import {
+  Cake,
+  CalendarDays,
+  Shield,
+  Sparkle,
+  User as UserIcon,
+} from "lucide-react";
 import CryptoJS from "crypto-js";
 import {
   Tooltip,
@@ -28,6 +34,7 @@ type user = {
   full_name: string;
   username: string;
   score: number;
+  isAdmin: boolean;
 };
 
 type basicSubmission = {
@@ -56,7 +63,9 @@ export default function User() {
   const [votedPosts, setVotedPosts] = useState<votedPost[]>();
 
   useEffect(() => {
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/user?username=" + username)
+    fetch(
+      import.meta.env.VITE_API_ENDPOINT + "/api/v1/user?username=" + username
+    )
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");
@@ -73,7 +82,8 @@ export default function User() {
           full_name: data.metadata.full_name,
           username: data.username,
           joined: data.joined,
-          score: data.metadata.score
+          score: data.metadata.score,
+          isAdmin: data.metadata.isAdmin,
         };
 
         setCurrentUser(current);
@@ -88,7 +98,11 @@ export default function User() {
 
   useEffect(() => {
     setPending(true);
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/userSubmissions?username=" + username)
+    fetch(
+      import.meta.env.VITE_API_ENDPOINT +
+        "/api/v1/userSubmissions?username=" +
+        username
+    )
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");
@@ -110,7 +124,11 @@ export default function User() {
 
   useEffect(() => {
     setPending(true);
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/allUserVotes?username=" + username)
+    fetch(
+      import.meta.env.VITE_API_ENDPOINT +
+        "/api/v1/allUserVotes?username=" +
+        username
+    )
       .then((res) => {
         if (res.status === 404) {
           navigate("/404");
@@ -177,9 +195,12 @@ export default function User() {
                           {currentUser.username.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <CardTitle className="text-2xl">
+                      <CardTitle className="text-2xl inline-flex items-center gap-1">
                         @{currentUser.username}
                       </CardTitle>
+                      {currentUser.isAdmin && (
+                        <p className="text-sm text-gray-500 mt-1 text-left">Administrator</p>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {currentUser.full_name != "" && (
@@ -221,9 +242,9 @@ export default function User() {
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Sparkle className="w-4 h-4" />
-                          {currentUser.score} karma
-                        </div>
+                        <Sparkle className="w-4 h-4" />
+                        {currentUser.score} karma
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -308,7 +329,7 @@ export default function User() {
                                     </h3>
                                     <div className="flex gap-3 text-sm text-muted-foreground">
                                       <span className="text-xs">
-                                        {currentUser.username}{" "}
+                                        <strong>{currentUser.username}</strong>{" "}
                                         {post.Upvoted ? "upvoted" : "downvoted"}{" "}
                                         this
                                       </span>
