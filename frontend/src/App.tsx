@@ -14,46 +14,177 @@ import Settings from "./components/Settings";
 import Search from "./components/Search";
 import AdminPanel from "./components/AdminPanel";
 import Forbidden from "./components/Forbidden";
+import { Helmet } from "react-helmet";
+
+const SERVICE_NAME = import.meta.env.VITE_SERVICE_NAME;
 
 function App() {
   const REQUIRED_ENV_VARS: string[] = ["VITE_API_ENDPOINT"];
-
   REQUIRED_ENV_VARS.map((envVar) => {
     if (import.meta.env[envVar] === undefined) {
       throw new Error("unable to find required .env variable: " + envVar);
     }
   });
-
   return (
     <GoogleReCaptchaProvider reCaptchaKey="6LcopnUrAAAAACZBUINoyS__gkqGOTm-Nj4qhIm1">
       <Router>
         <div className="App">
           <Routes>
             {/* PUBLIC ROUTES */}
-            <Route path="/" element={<Home />} />
-            <Route path="/latest" element={<Home sortType="latest" />} />
-            <Route path="/top" element={<Home sortType="best" />} />
-
-            <Route path="/login" element={<Login serviceName="HackerNews" />} />
-            <Route path="/logout" element={<Logout />} />
+            <Route
+              path="/"
+              element={
+                <>
+                  <Helmet>
+                    <title>Home | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Home />
+                </>
+              }
+            />
+            <Route
+              path="/latest"
+              element={
+                <>
+                  <Helmet>
+                    <title>Latest | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Home sortType="latest" />
+                </>
+              }
+            />
+            <Route
+              path="/top"
+              element={
+                <>
+                  <Helmet>
+                    <title>Top | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Home sortType="best" />
+                </>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <>
+                  <Helmet>
+                    <title>Login | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Login serviceName={SERVICE_NAME} />
+                </>
+              }
+            />
+            <Route
+              path="/logout"
+              element={
+                <>
+                  <Helmet>
+                    <title>Logout | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Logout />
+                </>
+              }
+            />
             <Route
               path="/magic"
-              element={<MagicLink serviceName="HackerNews" />}
+              element={
+                <>
+                  <Helmet>
+                    <title>Magic Link | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <MagicLink serviceName={SERVICE_NAME} />
+                </>
+              }
             />
-            <Route path="/login-thanks" element={<LoginThanks />} />
-            <Route path="/u/:username" element={<User />} />
-            <Route path="/u/" element={<UserRedirect />} />
-            <Route path="/account/submissions" element={<UserRedirect />} />
-            <Route path="/submission/:sid" element={<Submission />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/403" element={<Forbidden />} />
-
+            <Route
+              path="/login-thanks"
+              element={
+                <>
+                  <Helmet>
+                    <title>Login Thanks | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <LoginThanks />
+                </>
+              }
+            />
+            <Route
+              path="/u/:username"
+              element={
+                <>
+                  <Helmet>
+                    <title>User Profile | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <User />
+                </>
+              }
+            />
+            <Route
+              path="/u/"
+              element={
+                <>
+                  <Helmet>
+                    <title>User | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <UserRedirect />
+                </>
+              }
+            />
+            <Route
+              path="/account/submissions"
+              element={
+                <>
+                  <Helmet>
+                    <title>My Submissions | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <UserRedirect />
+                </>
+              }
+            />
+            <Route
+              path="/submission/:sid"
+              element={
+                <>
+                  <Helmet>
+                    <title>Submission | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Submission />
+                </>
+              }
+            />
+            <Route
+              path="/search"
+              element={
+                <>
+                  <Helmet>
+                    <title>Search | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Search />
+                </>
+              }
+            />
+            <Route
+              path="/403"
+              element={
+                <>
+                  <Helmet>
+                    <title>Forbidden | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <Forbidden />
+                </>
+              }
+            />
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}
             <Route
               path="/submit"
               element={
                 <ProtectedRoute>
-                  <Submit />
+                  <>
+                    <Helmet>
+                      <title>Submit | {SERVICE_NAME}</title>
+                    </Helmet>
+                    <Submit />
+                  </>
                 </ProtectedRoute>
               }
             />
@@ -61,7 +192,12 @@ function App() {
               path="/account/settings"
               element={
                 <ProtectedRoute>
-                  <Settings />
+                  <>
+                    <Helmet>
+                      <title>Settings | {SERVICE_NAME}</title>
+                    </Helmet>
+                    <Settings />
+                  </>
                 </ProtectedRoute>
               }
             />
@@ -69,7 +205,12 @@ function App() {
               path="/account/admin"
               element={
                 <ProtectedRoute>
-                  <AdminPanel />
+                  <>
+                    <Helmet>
+                      <title>Admin Panel | {SERVICE_NAME}</title>
+                    </Helmet>
+                    <AdminPanel />
+                  </>
                 </ProtectedRoute>
               }
             />

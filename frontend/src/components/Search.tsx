@@ -23,6 +23,7 @@ export default function Search() {
     const q = params.get("q");
     if (q !== null && q != "") {
       setQuery(q)
+      document.title = `Search for '${q}' | ${import.meta.env.VITE_SERVICE_NAME}`
     }
   }, [])
 
@@ -30,10 +31,12 @@ export default function Search() {
     if (query == "") {
       console.log("Note: no query in search box. Exiting useEffect");
       window.history.replaceState({}, '', '/search');
+      document.title = `Search | ${import.meta.env.VITE_SERVICE_NAME}`
       return;
     }
 
     window.history.replaceState({}, '', '?q=' + query);
+    document.title = `Search for '${query}' | ${import.meta.env.VITE_SERVICE_NAME}`
 
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/searchSubmissions?q=" + query)
       .then((response) => {
