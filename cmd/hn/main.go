@@ -468,7 +468,7 @@ func main() {
 				"birthday":  userMetadata.Birthdate,
 				"bio":       userMetadata.Bio_text,
 				"isAdmin":   userMetadata.IsAdmin,
-				"score": user.Score,
+				"score":     user.Score,
 			},
 		})
 	})
@@ -681,7 +681,7 @@ func main() {
 		})
 	})
 
-	app.Get(version + "/adminMetrics", func(c *fiber.Ctx) error {
+	app.Get(version+"/adminMetrics", func(c *fiber.Ctx) error {
 		// success, _ := jwt.ParseAuthHeader(c.Get("Authorization"))
 
 		// if !success {
@@ -692,6 +692,18 @@ func main() {
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"metrics": db.GetAdminMetrics(),
+		})
+	})
+
+	app.Get(version+"/checkAdmin", func(c *fiber.Ctx) error {
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		return c.JSON(fiber.Map{
+			"isAdmin": db.CheckAdminStatus(db.User{Username: username}),
 		})
 	})
 

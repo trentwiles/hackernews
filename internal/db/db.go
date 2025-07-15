@@ -76,18 +76,18 @@ type BasicSubmissionAndVote struct {
 }
 
 type AdminMetrics struct {
-	TodayPosts int
-	TodayMinusOnePosts int
-	TodayMinusTwoPosts int
+	TodayPosts           int
+	TodayMinusOnePosts   int
+	TodayMinusTwoPosts   int
 	TodayMinusThreePosts int
-	TodayMinusFourPosts int
-	TodayMinusFivePosts int
-	TodayMinusSixPosts int
+	TodayMinusFourPosts  int
+	TodayMinusFivePosts  int
+	TodayMinusSixPosts   int
 
 	TotalAllTimeSubmissions int
 
 	TotalAllTimeUsers int
-	TotalActiveUsers int
+	TotalActiveUsers  int
 }
 
 // enum equiv in Go for audit log events
@@ -841,7 +841,6 @@ func GetAdminMetrics() AdminMetrics {
 
 	log.Printf("[INFO] Database made admin query for # of submissions over the last 7 days\n")
 
-
 	var totalPosts int
 	query = `
 		SELECT count(*)
@@ -885,15 +884,35 @@ func GetAdminMetrics() AdminMetrics {
 	log.Printf("[INFO] Database made admin query for # of active users over the last 7 days\n")
 
 	return AdminMetrics{
-		TodayPosts: today,
-		TodayMinusOnePosts: todayMinusOne,
-		TodayMinusTwoPosts: todayMinusTwo,
-		TodayMinusThreePosts: todayMinusThree,
-		TodayMinusFourPosts: todayMinusFour,
-		TodayMinusFivePosts: todayMinusFive,
-		TodayMinusSixPosts: todayMinusSix,
+		TodayPosts:              today,
+		TodayMinusOnePosts:      todayMinusOne,
+		TodayMinusTwoPosts:      todayMinusTwo,
+		TodayMinusThreePosts:    todayMinusThree,
+		TodayMinusFourPosts:     todayMinusFour,
+		TodayMinusFivePosts:     todayMinusFive,
+		TodayMinusSixPosts:      todayMinusSix,
 		TotalAllTimeSubmissions: totalPosts,
-		TotalAllTimeUsers: totalUsers,
-		TotalActiveUsers: totalActiveUsers,
+		TotalAllTimeUsers:       totalUsers,
+		TotalActiveUsers:        totalActiveUsers,
 	}
+}
+
+func CheckAdminStatus(user User) bool {
+	if user.Username == "" {
+		log.Fatal("[FATAL] Unable to check admin status of user with blank username\n")
+	}
+
+	query := `
+		SELECT EXISTS (
+			SELECT 1 FROM admins WHERE username = $1
+		);
+		`
+
+	var exists bool
+	err := GetDB().QueryRow(query, user.Username).Scan(&exists)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return exists
 }

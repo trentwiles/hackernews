@@ -13,6 +13,7 @@ import Logout from "./components/Logout";
 import Settings from "./components/Settings";
 import Search from "./components/Search";
 import AdminPanel from "./components/AdminPanel";
+import Forbidden from "./components/Forbidden";
 
 function App() {
   const REQUIRED_ENV_VARS: string[] = ["VITE_API_ENDPOINT"];
@@ -45,6 +46,7 @@ function App() {
             <Route path="/account/submissions" element={<UserRedirect />} />
             <Route path="/submission/:sid" element={<Submission />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/403" element={<Forbidden />} />
 
             {/* PROTECTED (AUTH REQUIRED) ROUTES */}
             <Route

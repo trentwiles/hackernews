@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { SidebarInset, SidebarProvider } from "./ui/sidebar";
-import { TrendingUp, FileText, Users } from "lucide-react";
+import { FileText, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminPanel() {
+  const navigate = useNavigate();
   const daysOfTheWeek = [
     "Sunday",
     "Monday",
@@ -33,10 +36,34 @@ export default function AdminPanel() {
   );
   const [activeUsers, setActiveUsers] = useState<number>(-1);
   const [totalUsers, setTotalUsers] = useState<number>(-1);
+  const [totalPosts, setTotalPosts] = useState<number>(-1);
   const [isPending, setIsPending] = useState<boolean>(true);
   const [isError, setIsError] = useState<boolean>(false);
 
   useEffect(() => {
+    // first check admin status
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/checkAdmin", {
+      headers: {
+        Authorization: "Bearer " + Cookies.get("token"),
+      }
+    })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      return res.json();
+    })
+    .then((json) => {
+      if (json.isAdmin === undefined || !json.isAdmin) {
+        throw new Error(`no admin perms`)
+      }
+    })
+    .catch((err) => {
+      console.error(err)
+      navigate("/403")
+      return
+    });
+
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/adminMetrics")
       .then((response) => {
         if (!response.ok) throw new Error("Network response was not ok");
@@ -77,6 +104,7 @@ export default function AdminPanel() {
         setChartData(data);
         setActiveUsers(json.metrics.TotalActiveUsers);
         setTotalUsers(json.metrics.TotalAllTimeUsers);
+        setTotalPosts(json.metrics.TotalAllTimeSubmissions);
         setIsPending(false);
         setIsError(false);
       })
@@ -189,15 +217,17 @@ export default function AdminPanel() {
                   <Card className="flex-1">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-large">
-                        Weekly Total
+                        Total Posts
                       </CardTitle>
                       <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{totalWeekPosts}</div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Average: {(totalWeekPosts / 7).toFixed(1)} posts/day
-                      </p>
+                      <div className="text-2xl font-bold">
+                        {totalPosts || 0}
+                      </div>
+                      {/* <p className="text-xs text-muted-foreground mt-1">
+                        
+                      </p> */}
                     </CardContent>
                   </Card>
                 </div>
