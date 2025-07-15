@@ -12,6 +12,7 @@ import UserRedirect from "./components/UserRedirect";
 import Logout from "./components/Logout";
 import Settings from "./components/Settings";
 import Search from "./components/Search";
+import AdminPanel from "./components/AdminPanel";
 
 function App() {
   const REQUIRED_ENV_VARS: string[] = ["VITE_API_ENDPOINT"];
@@ -59,6 +60,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminPanel />
                 </ProtectedRoute>
               }
             />
