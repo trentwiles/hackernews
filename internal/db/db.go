@@ -75,6 +75,21 @@ type BasicSubmissionAndVote struct {
 	IsUpvoted  bool
 }
 
+type AdminMetrics struct {
+	TodayPosts int
+	TodayMinusOnePosts int
+	TodayMinusTwoPosts int
+	TodayMinusThreePosts int
+	TodayMinusFourPosts int
+	TodayMinusFivePosts int
+	TodayMinusSixPosts int
+
+	TotalAllTimeSubmissions int
+
+	TotalAllTimeUsers int
+	TotalActiveUsers int
+}
+
 // enum equiv in Go for audit log events
 // ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email')
 type AuditEvent string
@@ -795,4 +810,90 @@ func SearchSubmissionByQuery(query string, offset int) []Submission {
 	log.Printf("[INFO] Submission search query returned %d results, with a limit of %d\n", len(resultList), DEFAULT_SELECT_LIMIT)
 
 	return resultList
+}
+
+// ATTN: consider caching this route, it's expensive
+func GetAdminMetrics() AdminMetrics {
+
+	// Last seven days, how many posts per day?
+	query := `
+		SELECT
+			days_between((NOW() - INTERVAL '1 day')::TIMESTAMP, NOW()::TIMESTAMP) as today,
+			days_between((NOW() - INTERVAL '2 days')::TIMESTAMP, (NOW() - INTERVAL '1 day')::TIMESTAMP) as todayMinusOne,
+			days_between((NOW() - INTERVAL '3 days')::TIMESTAMP, (NOW() - INTERVAL '2 days')::TIMESTAMP) as todayMinusTwo,
+			days_between((NOW() - INTERVAL '4 days')::TIMESTAMP, (NOW() - INTERVAL '3 days')::TIMESTAMP) as todayMinusThree,
+			days_between((NOW() - INTERVAL '5 days')::TIMESTAMP, (NOW() - INTERVAL '4 days')::TIMESTAMP) as todayMinusFour,
+			days_between((NOW() - INTERVAL '6 days')::TIMESTAMP, (NOW() - INTERVAL '5 days')::TIMESTAMP) as todayMinusFive,
+			days_between((NOW() - INTERVAL '7 days')::TIMESTAMP, (NOW() - INTERVAL '6 days')::TIMESTAMP) as todayMinusSix;	
+	`
+	var today int
+	var todayMinusOne int
+	var todayMinusTwo int
+	var todayMinusThree int
+	var todayMinusFour int
+	var todayMinusFive int
+	var todayMinusSix int
+
+	err := GetDB().QueryRow(query).Scan(&today, &todayMinusOne, &todayMinusTwo, &todayMinusThree, &todayMinusFour, &todayMinusFive, &todayMinusSix)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[INFO] Database made admin query for # of submissions over the last 7 days\n")
+
+
+	var totalPosts int
+	query = `
+		SELECT count(*)
+		FROM submissions
+	`
+	err = GetDB().QueryRow(query).Scan(&totalPosts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var totalUsers int
+	query = `
+		SELECT count(*)
+		FROM users
+	`
+	err = GetDB().QueryRow(query).Scan(&totalUsers)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[INFO] Database made admin query for # of total users\n")
+
+	// goal of the actives users query: how many users have made a post/voted in the last week?
+	// when comments become avaialble, this should include comments?
+	var totalActiveUsers int
+	query = `
+		SELECT COUNT(DISTINCT users.username)
+		FROM users
+		INNER JOIN submissions ON users.username = submissions.username
+		INNER JOIN votes ON users.username = votes.voter_username
+		WHERE (
+			submissions.created_at BETWEEN (NOW() - INTERVAL '7 days') AND NOW()
+			OR votes.ts BETWEEN (NOW() - INTERVAL '7 days') AND NOW()
+		);
+	`
+	err = GetDB().QueryRow(query).Scan(&totalActiveUsers)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[INFO] Database made admin query for # of active users over the last 7 days\n")
+
+	return AdminMetrics{
+		TodayPosts: today,
+		TodayMinusOnePosts: todayMinusOne,
+		TodayMinusTwoPosts: todayMinusTwo,
+		TodayMinusThreePosts: todayMinusThree,
+		TodayMinusFourPosts: todayMinusFour,
+		TodayMinusFivePosts: todayMinusFive,
+		TodayMinusSixPosts: todayMinusSix,
+		TotalAllTimeSubmissions: totalPosts,
+		TotalAllTimeUsers: totalUsers,
+		TotalActiveUsers: totalActiveUsers,
+	}
 }

@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/net/html"
 	"log"
 	"net/http"
 	"strconv"
+
+	"golang.org/x/net/html"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -677,6 +678,20 @@ func main() {
 
 		return c.JSON(fiber.Map{
 			"results": query,
+		})
+	})
+
+	app.Get(version + "/adminMetrics", func(c *fiber.Ctx) error {
+		// success, _ := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		// if !success {
+		// 	return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		// }
+
+		// again, in the future check if the user is an admin, but for MVP, it doesn't really matter
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"metrics": db.GetAdminMetrics(),
 		})
 	})
 

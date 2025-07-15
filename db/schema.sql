@@ -53,6 +53,24 @@ CREATE TABLE IF NOT EXISTS submissions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (username) REFERENCES users(username) -- notice the lack of cascade
 );
+
+-- handy function that allows you to query count of posts between timestamps
+-- Usage (for posts in the last 48 hours):
+-- SELECT days_between((NOW() - INTERVAL '2 days')::TIMESTAMP, NOW()::TIMESTAMP);
+CREATE OR REPLACE FUNCTION days_between(ts1 TIMESTAMP, ts2 TIMESTAMP)
+RETURNS INTEGER AS $$
+DECLARE
+  result INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO result
+  FROM submissions
+  WHERE created_at BETWEEN ts1 AND ts2;
+
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+
 CREATE TABLE IF NOT EXISTS votes (
     id SERIAL PRIMARY KEY,
     submission_id UUID NOT NULL,
