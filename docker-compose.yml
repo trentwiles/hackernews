@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile.react
     container_name: react-nginx
     ports:
-      - "80:80"
+      - "8080:8080"
     restart: unless-stopped
 
   go-server:
