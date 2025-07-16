@@ -2,10 +2,21 @@
 
 ## Production
 ```bash
-cp .env.example .env
-# edit the .env file in your favorite text editor
+# install docker, this differs based on your linux distro:
+# https://docs.docker.com/engine/install/
 
-docker compose up
+# edit the backend and frontend .env files in your favorite text editor
+cp .env.example .env
+nano .env
+
+cp frontend/.env.example frontend/.env
+nano frontend/.env
+
+# edit the Caddy configuration file to use your domains
+nano config/Caddyfile
+
+# bring docker up, ensure ports 80, 443, 5432, and 30000 are free
+docker compose up -d
 ```
 
 ## Development

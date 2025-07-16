@@ -1,5 +1,6 @@
 # make sure your dns records are set up before running the dockerfile
 
+# CHANGE to your domain
 news.trentwiles.com {
     root * /srv
     file_server
@@ -18,6 +19,18 @@ news.trentwiles.com {
     }
 }
 
+# CHANGE to your domain
 api.news.trentwiles.com {
     reverse_proxy :30000
+
+    # fixes CORS issues
+    header {
+        Access-Control-Allow-Origin   *
+        Access-Control-Allow-Methods  *
+        Access-Control-Allow-Headers  *
+        Access-Control-Allow-Credentials false
+    }
+
+    @options method OPTIONS
+    respond @options 204
 }
