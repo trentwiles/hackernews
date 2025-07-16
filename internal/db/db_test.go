@@ -62,3 +62,7 @@ func TestCreateMagicLink(t *testing.T) {
 func TestCreateMagicLinkTwo(t *testing.T) {
     fmt.Println(CreateMagicLink(User{Email: "me@trentwil.es"}))
 }
+
+func TestCreateRandomData(t *testing.T) {
+    GenerateNonsenseData(10, 300);
+}

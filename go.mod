@@ -3,12 +3,12 @@ module github.com/trentwiles/hackernews
 go 1.24.4
 
 require (
+	github.com/drhodes/golorem v0.0.0-20220328165741-da82e5b29246
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
-	github.com/urfave/cli/v3 v3.3.8
 	golang.org/x/net v0.17.0
 )
 

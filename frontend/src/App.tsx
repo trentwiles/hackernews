@@ -26,7 +26,7 @@ function App() {
     }
   });
   return (
-    <GoogleReCaptchaProvider reCaptchaKey="6LcopnUrAAAAACZBUINoyS__gkqGOTm-Nj4qhIm1">
+    <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_GOOGLE_RECAPTCHA_PUBLIC_KEY}>
       <Router>
         <div className="App">
           <Routes>
