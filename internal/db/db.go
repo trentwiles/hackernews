@@ -869,14 +869,16 @@ func GetAdminMetrics() AdminMetrics {
 	// when comments become avaialble, this should include comments?
 	var totalActiveUsers int
 	query = `
-		SELECT COUNT(DISTINCT users.username)
-		FROM users
-		INNER JOIN submissions ON users.username = submissions.username
-		INNER JOIN votes ON users.username = votes.voter_username
-		WHERE (
-			submissions.created_at BETWEEN (NOW() - INTERVAL '7 days') AND NOW()
-			OR votes.ts BETWEEN (NOW() - INTERVAL '7 days') AND NOW()
-		);
+		SELECT COUNT(DISTINCT username) AS active_users
+		FROM (
+			SELECT username FROM submissions
+			WHERE created_at BETWEEN (NOW() - INTERVAL '7 days') AND NOW()
+			
+			UNION
+
+			SELECT voter_username AS username FROM votes
+			WHERE ts BETWEEN (NOW() - INTERVAL '7 days') AND NOW()
+		) AS active;
 	`
 	err = GetDB().QueryRow(query).Scan(&totalActiveUsers)
 	if err != nil {

@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Login from "./components/Login";
 import Home from "./components/Home";
 import LoginThanks from "./components/LoginThanks";
@@ -15,19 +20,41 @@ import Search from "./components/Search";
 import AdminPanel from "./components/AdminPanel";
 import Forbidden from "./components/Forbidden";
 import { Helmet } from "react-helmet";
+import ReactGA from "react-ga4";
+import { useEffect } from "react";
 
 const SERVICE_NAME = import.meta.env.VITE_SERVICE_NAME;
 
+function AnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    ReactGA.send({
+      hitType: "pageview",
+      page: location.pathname + location.search,
+    });
+  }, [location]);
+
+  return null;
+}
+
 function App() {
+  ReactGA.initialize(import.meta.env.VITE_GOOGLE_ANALYTICS_ID);
+
   const REQUIRED_ENV_VARS: string[] = ["VITE_API_ENDPOINT"];
+
   REQUIRED_ENV_VARS.map((envVar) => {
     if (import.meta.env[envVar] === undefined) {
       throw new Error("unable to find required .env variable: " + envVar);
     }
   });
+
   return (
-    <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_GOOGLE_RECAPTCHA_PUBLIC_KEY}>
+    <GoogleReCaptchaProvider
+      reCaptchaKey={import.meta.env.VITE_GOOGLE_RECAPTCHA_PUBLIC_KEY}
+    >
       <Router>
+        <AnalyticsTracker />
         <div className="App">
           <Routes>
             {/* PUBLIC ROUTES */}

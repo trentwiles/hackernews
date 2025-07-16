@@ -8,6 +8,10 @@ import (
     "github.com/joho/godotenv"
 )
 
+func Init() {
+    //
+}
+
 // first trys WORKING_DIR/.env, then trys ../../.env
 func LoadEnv() {
     paths := []string{
