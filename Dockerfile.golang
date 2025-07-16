@@ -15,8 +15,8 @@ COPY . .
 # Build the main.go server (assume it's in root or specify path)
 RUN go build -o main ./cmd/hn/main.go
 
-# Expose whatever port your server listens on (e.g., 8080)
-EXPOSE 8080
+# Go API server listens on port 30000, expose that so it can go through caddy reverse proxy
+EXPOSE 30000
 
 # Use entrypoint that loads .env file via envsubst or use Docker env
 CMD ["./main"]

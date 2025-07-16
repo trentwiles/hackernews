@@ -21,7 +21,7 @@ news.trentwiles.com {
 
 # CHANGE to your domain
 api.news.trentwiles.com {
-    reverse_proxy :30000
+    reverse_proxy go-server:30000
 
     # fixes CORS issues
     header {
