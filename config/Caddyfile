@@ -1,0 +1,23 @@
+# make sure your dns records are set up before running the dockerfile
+
+news.trentwiles.com {
+    root * /srv
+    file_server
+    
+    try_files {path} /index.html
+    
+    # compression
+    encode gzip
+    
+    # security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy no-referrer-when-downgrade
+    }
+}
+
+api.news.trentwiles.com {
+    reverse_proxy :30000
+}
