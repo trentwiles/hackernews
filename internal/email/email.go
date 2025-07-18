@@ -20,6 +20,7 @@ type MagicLinkEmail struct {
 	Token string
 }
 
+// unused testing function
 func SendEmail(email Email) {
 	config.LoadEnv()
 
@@ -70,10 +71,19 @@ func SendEmailTemplate(magic MagicLinkEmail) {
 	// TEMPLATE HANDLING
 	tmpl := template.Must(template.ParseFiles("internal/templates/magic-link.html"))
 	var buf bytes.Buffer
-	tmpl.Execute(&buf, struct {Token string}{Token: magic.Token})
+	tmpl.Execute(&buf, struct {
+		Token string
+		Title string
+		Url string
+	}{
+		Token: magic.Token,
+		Title: config.GetEnv("VITE_SERVICE_NAME"),
+		Url: config.GetEnv("VITE_SERVICE_NAME"),
+	})
 	// END TEMPLATE HANDLING
 
-	subject := "Your Fake Hacker News Magic Link"
+	// Future:
+	subject := "Magic Login Link | " + config.GetEnv("VITE_SERVICE_NAME")
 
 	message := []byte("To: " + magic.To + "\r\n" +
 		"Subject: " + subject + "\r\n" +

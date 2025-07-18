@@ -37,12 +37,17 @@
 
 <body>
   <div class="content">
-    <h1>Magic Sign In Link</h1>
+    <h1>Magic Login Link | {{.Title}}</h1>
     <br>
     <p>Someone requested a magic log in link for this email address. If you did not do this, you can safely ignore this message.</p>
     <br>
-    <a href="http://localhost:5173/magic?token={{.Token}}">
+    <a href="{{.Url}}/magic?token={{.Token}}">
       <button class="fancy-btn">Log In</button>
     </a>
+    <footer>
+      <i>
+        (c) {.Title}
+      </i>
+    </footer>
   </div>
 </body>

@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/html"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
 	// my packages
@@ -65,11 +66,12 @@ var version string = "/api/v1"
 func main() {
 	// create web app
 	app := fiber.New()
+	app.Use(cors.New())
 	app.Use(logger.New())
 
 	app.Static("/", "./static")
 
-	log.Println("[INFO] Started webserver with logging middleware")
+	log.Println("[INFO] Started webserver with CORS & Logging middleware")
 
 	// app.Get("/", func(c *fiber.Ctx) error {
 	// 	success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
