@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/smtp"
+	"strings"
 
 	"github.com/trentwiles/hackernews/internal/config"
 )
@@ -78,12 +79,16 @@ func SendEmailTemplate(magic MagicLinkEmail) {
 	}{
 		Token: magic.Token,
 		Title: config.GetEnv("VITE_SERVICE_NAME"),
-		Url: config.GetEnv("VITE_SERVICE_NAME"),
+		Url: config.GetEnv("VITE_FRONTEND_URL"),
 	})
 	// END TEMPLATE HANDLING
 
-	// Future:
 	subject := "Magic Login Link | " + config.GetEnv("VITE_SERVICE_NAME")
+
+	// not that this would ever happen, but if someone tries to hijack the email
+	if strings.Contains(magic.To, "\n") || strings.Contains(magic.To, "\r") {
+		log.Fatal("[FATAL] Header injection attempt prevented")
+	}
 
 	message := []byte("To: " + magic.To + "\r\n" +
 		"Subject: " + subject + "\r\n" +

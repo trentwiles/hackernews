@@ -136,7 +136,7 @@ export default function Submission() {
         console.error(err);
         return;
       });
-  }, [sid]);
+  }, [sid, upvoteEnabled, downvoteEnabled]); // <--- fixes the upvote/downvote malfunction
 
   function deletePost() {
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/submission", {
