@@ -45,6 +45,12 @@ type SubmissionDeleteRequest struct {
 	Id string `json:"id"`
 }
 
+type CommentCreationRequest struct {
+	InResponseTo string `json:"inResponseTo"`
+	Content string `json:"content"`
+	CaptchaToken string `json:"captchaToken"`
+}
+
 // username VARCHAR(100) PRIMARY KEY,
 // full_name VARCHAR(100),
 // birthdate DATE,
@@ -704,6 +710,58 @@ func main() {
 
 		return c.JSON(fiber.Map{
 			"isAdmin": db.CheckAdminStatus(db.User{Username: username}),
+		})
+	})
+
+	// POST /api/v1/comment?parent=123123123
+	app.Post(version+"/comment", func(c *fiber.Ctx) error {
+		parent := c.Query("parent")
+
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		var req CommentCreationRequest
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		// VALIDATE CAPTCHA TOKEN
+		if !captcha.ValidateToken(req.CaptchaToken) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid Google Captcha response, try again later",
+			})
+		}
+		// END VALIDATE CAPTCHA TOKEN
+
+		var yourComment db.Comment = db.Comment{InResponseTo: req.InResponseTo, Content: req.Content, Author: username}
+		if parent != "" {
+			yourComment.ParentComment = parent
+		}
+
+		var commentId string = db.InsertNewComment(yourComment)
+
+		return c.JSON(fiber.Map{
+			"success": true,
+			"commentID": commentId,
+		})
+	})
+
+	app.Get(version + "/comments", func(c *fiber.Ctx) error {
+		parent := c.Query("id") // submissionID
+		if parent == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Missing submission `id`",
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"comments": db.GetCommentsOnSubmission(db.Submission{Id: parent}),
 		})
 	})
 
