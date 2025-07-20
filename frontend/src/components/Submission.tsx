@@ -40,6 +40,15 @@ type submission = {
   totalScore: number;
 };
 
+type comment = {
+  id: string;
+  author: string;
+  content: string;
+  flagged: boolean;
+  created_at: string;
+  parent?: string;
+};
+
 export default function Submission() {
   const { sid } = useParams();
   const navigate = useNavigate();
@@ -52,7 +61,9 @@ export default function Submission() {
   const [downvoteEnabled, setDownvoteEnabled] = useState<boolean>(true);
   const [canVote, setCanVote] = useState<boolean>(false);
 
-  const [shareButtonText, setShareButtonText] = useState<string>("Share")
+  const [shareButtonText, setShareButtonText] = useState<string>("Share");
+
+  const [comments, setComments] = useState<comment[]>([]);
 
   useEffect(() => {
     if (sid === undefined || sid == "") {
@@ -110,7 +121,7 @@ export default function Submission() {
       .then((res) => {
         if (res.status === 401) {
           setCanVote(false);
-          throw new Error("Unauthorized");  // This will skip to catch
+          throw new Error("Unauthorized"); // This will skip to catch
         }
 
         if (!res.ok) throw new Error("Network response was not ok");
@@ -137,6 +148,51 @@ export default function Submission() {
         return;
       });
   }, [sid, upvoteEnabled, downvoteEnabled]); // <--- fixes the upvote/downvote malfunction
+
+  // fetch the comments
+
+  useEffect(() => {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comments?id=" + sid, {
+      headers: {
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+    })
+      .then((res) => {
+        if (res.status != 200) {
+          throw new Error("unable to fetch comments"); // This will skip to catch
+        }
+
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.results == null || data.results.length == 0) {
+          return;
+        } else {
+          const res: comment[] = []
+          data.results.forEach((item) => {
+            const tmp: comment = {
+              author: item.Author,
+              content: item.Content, 
+              created_at: item.CreatedAt,
+              flagged: item.Flagged,
+              id: item.Id,
+              parent: item.ParentComment,
+            }
+            res.push(tmp)
+          })
+
+          setComments(res)
+          setPending(false)
+        }
+      })
+      .catch((err) => {
+        // whatever
+        console.error(err);
+        setPending(false)
+        return;
+      });
+  }, [sid]);
 
   function deletePost() {
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/submission", {
@@ -202,7 +258,7 @@ export default function Submission() {
       });
   }
 
-  console.log(canVote + " <-- can vote???")
+  console.log(canVote + " <-- can vote???");
 
   return (
     !pending &&
@@ -268,13 +324,19 @@ export default function Submission() {
                   <CardFooter className="bg-gray-50 border-t">
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-4">
-                        <Button variant="outline" size="sm" onClick={async () => {
-                          await navigator.clipboard.writeText(window.location.href);
-                          setShareButtonText("Copied To Clipboard")
-                          await new Promise((r) => setTimeout(r, 2000))
-                          setShareButtonText("Share")
-                        }}>
-                            <Share /> {shareButtonText}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(
+                              window.location.href
+                            );
+                            setShareButtonText("Copied To Clipboard");
+                            await new Promise((r) => setTimeout(r, 2000));
+                            setShareButtonText("Share");
+                          }}
+                        >
+                          <Share /> {shareButtonText}
                         </Button>
                         {currentUser == s.username && (
                           <Button
@@ -290,16 +352,14 @@ export default function Submission() {
 
                       <div className="flex items-center gap-2">
                         {canVote && (
-                            <Button
-                              variant={
-                                !upvoteEnabled ? "destructive" : "outline"
-                              }
-                              size="sm"
-                              disabled={!upvoteEnabled}
-                              onClick={() => vote(true)}
-                            >
-                              <ArrowUp />
-                            </Button>
+                          <Button
+                            variant={!upvoteEnabled ? "destructive" : "outline"}
+                            size="sm"
+                            disabled={!upvoteEnabled}
+                            onClick={() => vote(true)}
+                          >
+                            <ArrowUp />
+                          </Button>
                         )}
                         <Button variant="outline" size="sm">
                           <span className="font-medium">
@@ -308,15 +368,15 @@ export default function Submission() {
                         </Button>
                         {canVote && (
                           <Button
-                              variant={
-                                !downvoteEnabled ? "destructive" : "outline"
-                              }
-                              size="sm"
-                              disabled={!downvoteEnabled}
-                              onClick={() => vote(false)}
-                            >
-                              <ArrowDown />
-                            </Button>
+                            variant={
+                              !downvoteEnabled ? "destructive" : "outline"
+                            }
+                            size="sm"
+                            disabled={!downvoteEnabled}
+                            onClick={() => vote(false)}
+                          >
+                            <ArrowDown />
+                          </Button>
                         )}
                       </div>
                     </div>
