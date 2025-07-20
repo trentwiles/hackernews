@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
 	"time"
-	"math/rand"
 
-	"github.com/trentwiles/hackernews/internal/config"
 	"github.com/drhodes/golorem"
+	"github.com/trentwiles/hackernews/internal/config"
 
 	_ "github.com/lib/pq"
 )
@@ -92,6 +92,16 @@ type AdminMetrics struct {
 	TotalActiveUsers  int
 }
 
+type Comment struct {
+	Id            string
+	InResponseTo  string // uuid of the post the comment is being made on
+	Content       string // body of the comment
+	Author        string // username
+	ParentComment string // <OPTIONAL> uuid of the parent comment
+	Flagged       bool   // is this comment flagged for review?
+	CreatedAt     string // timestamp in string format, typescript can interpret this as a Date object
+}
+
 // enum equiv in Go for audit log events
 // ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email')
 type AuditEvent string
@@ -101,7 +111,6 @@ const (
 	Logout      AuditEvent = "logout"
 	FailedLogin AuditEvent = "failed_login"
 	Post        AuditEvent = "post"
-	Comment     AuditEvent = "comment"
 	PostClick   AuditEvent = "post_click"
 	SentEmail   AuditEvent = "sent_email"
 )
@@ -948,4 +957,80 @@ func GenerateNonsenseData(userCount int, postCount int) {
 		var s Submission = Submission{Title: lorem.Sentence(3, 6), Body: lorem.Paragraph(50, 500), Username: usernames[rand.Intn(len(usernames))], Link: "http://www.example.com"}
 		CreateSubmission(s)
 	}
+}
+
+func InsertNewComment(comment Comment) string {
+	// bare minimum requirements for a new comment
+	if comment.InResponseTo == "" || comment.Author == "" || comment.Content == "" {
+		log.Fatal("[FATAL] Attempted to insert new comment without one or more of the following: InResponseTo, Author, Content")
+	}
+
+	var id string
+
+	if comment.ParentComment != "" {
+		query := `
+			INSERT INTO comments (in_response_to, content, author, parent_comment)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id;
+		`
+
+		err := GetDB().QueryRow(query, comment.InResponseTo, comment.Content, comment.Author, comment.ParentComment).Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("[INFO] Database made comment insertion in response to %s WITH a parent comment\n", comment.InResponseTo)
+	} else {
+		query := `
+			INSERT INTO comments (in_response_to, content, author)
+			VALUES ($1, $2, $3)
+			RETURNING id;
+		`
+
+		err := GetDB().QueryRow(query, comment.InResponseTo, comment.Content, comment.Author).Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("[INFO] Database made comment insertion in response to %s WITHOUT a parent comment\n", comment.InResponseTo)
+	}
+
+	return id
+}
+
+func GetCommentsOnSubmission(submission Submission) []Comment {
+	if submission.Id == "" {
+		log.Fatal("Please use an ID when searching for a submission's comments")
+	}
+
+	// no limits/offset here at the moment, do this in a future update
+	rows, err := GetDB().Query("SELECT id, in_response_to, content, author, parent_comment, flagged, created_at FROM comments WHERE in_response_to = $1", submission.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var commentHolder []Comment
+
+	for rows.Next() {
+		// the following fields may be NULL:
+		var parentComment sql.NullString
+
+		var tempComment Comment
+		err := rows.Scan(&tempComment.Id, &tempComment.InResponseTo, &tempComment.Content, &tempComment.Author, &parentComment, &tempComment.Flagged, &tempComment.CreatedAt)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if !parentComment.Valid {
+			tempComment.ParentComment = ""
+		} else {
+			tempComment.ParentComment = parentComment.String
+		}
+
+		commentHolder = append(commentHolder, tempComment)
+
+	}
+
+	return commentHolder
 }
