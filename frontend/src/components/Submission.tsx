@@ -16,6 +16,7 @@ import {
   Share,
   Trash,
   User as UserIcon,
+  Send,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -28,6 +29,8 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import Cookies from "js-cookie";
+import { Textarea } from "./ui/textarea";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 type submission = {
   username: string;
@@ -50,6 +53,7 @@ type comment = {
 };
 
 export default function Submission() {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const { sid } = useParams();
   const navigate = useNavigate();
   const [s, setS] = useState<submission>();
@@ -64,6 +68,8 @@ export default function Submission() {
   const [shareButtonText, setShareButtonText] = useState<string>("Share");
 
   const [comments, setComments] = useState<comment[]>([]);
+  const [newComment, setNewComment] = useState<string>("");
+  const [submittingComment, setSubmittingComment] = useState<boolean>(false);
 
   useEffect(() => {
     if (sid === undefined || sid == "") {
@@ -150,8 +156,7 @@ export default function Submission() {
   }, [sid, upvoteEnabled, downvoteEnabled]); // <--- fixes the upvote/downvote malfunction
 
   // fetch the comments
-
-  useEffect(() => {
+  const fetchComments = () => {
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comments?id=" + sid, {
       headers: {
         Authorization: "Bearer " + Cookies.get("token"),
@@ -166,11 +171,11 @@ export default function Submission() {
         return res.json();
       })
       .then((data) => {
-        if (data.results == null || data.results.length == 0) {
+        if (data.comments == null || data.comments.length == 0) {
           return;
         } else {
           const res: comment[] = []
-          data.results.forEach((item) => {
+          data.comments.forEach((item) => {
             const tmp: comment = {
               author: item.Author,
               content: item.Content, 
@@ -192,6 +197,10 @@ export default function Submission() {
         setPending(false)
         return;
       });
+  };
+
+  useEffect(() => {
+    fetchComments();
   }, [sid]);
 
   function deletePost() {
@@ -258,6 +267,61 @@ export default function Submission() {
       });
   }
 
+  async function submitComment() {
+    if (!newComment.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+    if (!currentUser) {
+      toast.error("You must be logged in to comment");
+      return;
+    }
+
+    if (!executeRecaptcha) {
+      toast.error("Execute recaptcha not yet available");
+      return;
+    }
+
+    const token = await executeRecaptcha("login");
+
+    setSubmittingComment(true);
+
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      body: JSON.stringify({
+        SubmissionId: sid,
+        Content: newComment,
+        CaptchaToken: token,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        toast.success("Comment posted successfully");
+        setNewComment("");
+
+        console.log(data)
+
+        // then, refresh comments
+        fetchComments();
+        setSubmittingComment(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("Failed to post comment");
+        setSubmittingComment(false);
+      });
+  }
+
   console.log(canVote + " <-- can vote???");
 
   return (
@@ -269,7 +333,7 @@ export default function Submission() {
           <WebSidebar />
           <SidebarInset>
             <div className="min-h-screen bg-gray-50 py-8 px-4">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-3xl mx-auto space-y-6">
                 <Card className="shadow-sm">
                   <CardHeader className="space-y-1">
                     <CardTitle className="text-2xl font-bold leading-tight">
@@ -381,6 +445,111 @@ export default function Submission() {
                       </div>
                     </div>
                   </CardFooter>
+                </Card>
+
+                {/* "add a comment" is a seperate card from the actual comments */}
+                {currentUser ? (
+                  <Card className="shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold">
+                        Add a Comment
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Textarea
+                        placeholder="Write a comment..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="min-h-[100px] resize-none"
+                        disabled={submittingComment}
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={submitComment}
+                          disabled={submittingComment || !newComment.trim()}
+                          size="sm"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {submittingComment ? "Posting..." : "Post Comment"}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="shadow-sm">
+                    <CardContent className="py-6">
+                      <div className="text-center text-gray-600">
+                        <p>
+                          <Link to="/login" className="text-blue-600 hover:underline">
+                            Log in
+                          </Link>{" "}
+                          to post a comment
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* list of comments; future: limit to X comments and paginate */}
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold">
+                      Comments ({comments.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {comments.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">
+                          No comments yet 🙏
+                        </p>
+                      ) : (
+                        comments.map((comment) => (
+                          <div
+                            key={comment.id}
+                            className="border-b last:border-0 pb-4 last:pb-0"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <UserIcon className="h-4 w-4 text-gray-600" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Link
+                                    to={`/u/${comment.author}`}
+                                    className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                                  >
+                                    {comment.author}
+                                  </Link>
+                                  <span className="text-gray-500">•</span>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-gray-500">
+                                        {getTimeAgo(comment.created_at)}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <span>{datePrettyPrint(comment.created_at)}</span>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                                <p className="text-gray-700 leading-relaxed break-words overflow-wrap-anywhere">
+                                  {comment.content}
+                                </p>
+                                {comment.flagged && (
+                                  <p className="text-xs text-red-600 mt-1">
+                                    This comment has been flagged
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
                 </Card>
               </div>
             </div>
