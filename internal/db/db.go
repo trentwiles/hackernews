@@ -100,6 +100,8 @@ type Comment struct {
 	ParentComment string // <OPTIONAL> uuid of the parent comment
 	Flagged       bool   // is this comment flagged for review?
 	CreatedAt     string // timestamp in string format, typescript can interpret this as a Date object
+	Upvotes       int
+	Downvotes     int
 }
 
 // enum equiv in Go for audit log events
@@ -1003,8 +1005,26 @@ func GetCommentsOnSubmission(submission Submission) []Comment {
 		log.Fatal("Please use an ID when searching for a submission's comments")
 	}
 
+	query := `
+		SELECT
+			c.id,
+			c.in_response_to,
+			c.content,
+			c.author,
+			c.parent_comment,
+			c.flagged,
+			c.created_at,
+			COUNT(CASE WHEN cv.positive = TRUE THEN 1 END) AS upvotes,
+			COUNT(CASE WHEN cv.positive = FALSE THEN 1 END) AS downvotes
+		FROM comments c
+		LEFT JOIN comment_votes cv ON c.id = cv.comment_id
+		WHERE c.in_response_to = $1
+		GROUP BY c.id, c.in_response_to, c.content, c.author, c.parent_comment, c.flagged, c.created_at
+		ORDER BY c.created_at;	
+	`
+
 	// no limits/offset here at the moment, do this in a future update
-	rows, err := GetDB().Query("SELECT id, in_response_to, content, author, parent_comment, flagged, created_at FROM comments WHERE in_response_to = $1", submission.Id)
+	rows, err := GetDB().Query(query, submission.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1017,7 +1037,7 @@ func GetCommentsOnSubmission(submission Submission) []Comment {
 		var parentComment sql.NullString
 
 		var tempComment Comment
-		err := rows.Scan(&tempComment.Id, &tempComment.InResponseTo, &tempComment.Content, &tempComment.Author, &parentComment, &tempComment.Flagged, &tempComment.CreatedAt)
+		err := rows.Scan(&tempComment.Id, &tempComment.InResponseTo, &tempComment.Content, &tempComment.Author, &parentComment, &tempComment.Flagged, &tempComment.CreatedAt, &tempComment.Upvotes, &tempComment.Downvotes)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -1033,4 +1053,75 @@ func GetCommentsOnSubmission(submission Submission) []Comment {
 	}
 
 	return commentHolder
+}
+
+// get the comments on a post, plus if the user has voted on the comments
+
+func DeleteComment(comment Comment) {
+	if comment.Id == "" {
+		log.Fatal("Please provide a comment ID to delete a comment")
+	}
+
+	_, err := GetDB().Exec("DELETE FROM comments WHERE id = $1", comment.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[INFO] Deleted (or attempted to delete) comment ID %s\n", comment.Id)
+}
+
+func VoteOnComment(user User, comment Comment, isUpvote bool) bool {
+	// check that we have a valid username + comment id combo
+	if user.Username == "" || comment.Id == "" {
+		log.Fatal("username or comment id is blank (required to vote on a comment)")
+	}
+
+	// check if a vote already exists
+	var wasPositive bool
+	err := GetDB().QueryRow(
+		"SELECT positive FROM comment_votes WHERE comment_id = $1 AND voter_username = $2",
+		comment.Id, user.Username,
+	).Scan(&wasPositive)
+
+	if err == sql.ErrNoRows {
+		// insert new vote
+		query := `
+			INSERT INTO comment_votes (comment_id, voter_username, positive)
+			VALUES ($1, $2, $3)
+		`
+		_, err = GetDB().Exec(query, comment.Id, user.Username, isUpvote)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		voteType := "downvote"
+		if isUpvote {
+			voteType = "upvote"
+		}
+		log.Printf("[INFO] Inserted new %s for comment ID %s from %s\n", voteType, comment.Id, user.Username)
+		return true
+	} else if err != nil {
+		log.Fatal(err)
+	}
+
+	// update existing vote if changed
+	if isUpvote == wasPositive {
+		log.Printf("[INFO] Double vote attempted on comment by %s\n", user.Username)
+		return false
+	}
+
+	_, err = GetDB().Exec(
+		"UPDATE comment_votes SET positive = $1 WHERE voter_username = $2 AND comment_id = $3",
+		isUpvote, user.Username, comment.Id,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	updated := "upvote to downvote"
+	if isUpvote {
+		updated = "downvote to upvote"
+	}
+	log.Printf("[INFO] Updated comment vote from a %s by user %s\n", updated, user.Username)
+	return true
 }

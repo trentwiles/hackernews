@@ -99,6 +99,18 @@ CREATE TABLE IF NOT EXISTS comments (
     CONSTRAINT fk_in_response_to FOREIGN KEY (in_response_to) REFERENCES submissions(id)
 );
 
+-- essentially a clone of the normal votes table, yet this time it's for comments
+CREATE TABLE IF NOT EXISTS comment_votes (
+    id SERIAL PRIMARY KEY,
+    comment_id UUID NOT NULL,
+    voter_username VARCHAR(100) NOT NULL,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    positive BOOLEAN NOT NULL,
+    -- true = upvote, false = downvote
+    FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
+    FOREIGN KEY (voter_username) REFERENCES users(username) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS admins (
     username VARCHAR(100) PRIMARY KEY,
     remarks TEXT,

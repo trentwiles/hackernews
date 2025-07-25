@@ -765,6 +765,22 @@ func main() {
 		})
 	})
 
+	app.Delete(version + "/comment", func(c *fiber.Ctx) error {
+		id := c.Query("id")
+		if id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Missing comment `id`",
+			})
+		}
+
+		db.DeleteComment(db.Comment{Id: id})
+
+		return c.JSON(fiber.Map{
+			"success": true,
+			"message": "Deleted comment " + id,
+		})
+	})
+
 	// 404
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Route not found", "status": 404})
