@@ -52,6 +52,8 @@ type comment = {
   parent?: string;
   upvotes: number;
   downvotes: number;
+  isUpvoted: boolean;
+  isDownvoted: boolean;
 };
 
 export default function Submission() {
@@ -159,7 +161,7 @@ export default function Submission() {
 
   // fetch the comments
   const fetchComments = () => {
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comments?id=" + sid, {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comments?id=" + sid + "&username=" + (Cookies.get("username") || ""), {
       headers: {
         Authorization: "Bearer " + Cookies.get("token"),
       },
@@ -186,7 +188,9 @@ export default function Submission() {
               id: item.Id,
               parent: item.ParentComment,
               upvotes: item.Upvotes,
-              downvotes: item.Downvotes
+              downvotes: item.Downvotes,
+              isUpvoted: item.HasUpvoted,
+              isDownvoted: item.HasDownvoted
             }
             res.push(tmp)
           })
@@ -268,6 +272,69 @@ export default function Submission() {
       })
       .catch((error) => {
         console.log(error);
+      });
+  }
+
+  // Add comment voting function
+  function voteComment(commentId: string, intent: boolean) {
+    // Optimistically update UI
+    setComments(prevComments => 
+      prevComments.map(comment => {
+        if (comment.id === commentId) {
+          const newComment = { ...comment };
+          
+          // Reset vote counts based on previous state
+          if (comment.isUpvoted) {
+            newComment.upvotes--;
+          }
+          if (comment.isDownvoted) {
+            newComment.downvotes--;
+          }
+          
+          // Apply new vote
+          if (intent) {
+            newComment.upvotes++;
+            newComment.isUpvoted = true;
+            newComment.isDownvoted = false;
+          } else {
+            newComment.downvotes++;
+            newComment.isUpvoted = false;
+            newComment.isDownvoted = true;
+          }
+          
+          return newComment;
+        }
+        return comment;
+      })
+    );
+
+    // Make API call
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comment/vote", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      body: JSON.stringify({
+        CommentId: commentId,
+        Upvote: intent,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Refresh comments to get accurate data
+        fetchComments();
+      })
+      .catch((error) => {
+        console.error("Error voting on comment:", error);
+        toast.error("Failed to vote on comment");
+        // Revert optimistic update on error
+        fetchComments();
       });
   }
 
@@ -546,6 +613,35 @@ export default function Submission() {
                                   <p className="text-xs text-red-600 mt-1">
                                     This comment has been flagged
                                   </p>
+                                )}
+                                
+                                {/* Comment voting buttons */}
+                                {currentUser && (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Button
+                                      variant={comment.isUpvoted ? "destructive" : "outline"}
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      disabled={comment.isUpvoted}
+                                      onClick={() => voteComment(comment.id, true)}
+                                    >
+                                      <ArrowUp className="h-3 w-3" />
+                                    </Button>
+                                    <Button variant="outline" size="sm" className="h-7 px-3">
+                                      <span className="text-xs font-medium">
+                                        {comment.upvotes - comment.downvotes} upvotes
+                                      </span>
+                                    </Button>
+                                    <Button
+                                      variant={comment.isDownvoted ? "destructive" : "outline"}
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      disabled={comment.isDownvoted}
+                                      onClick={() => voteComment(comment.id, false)}
+                                    >
+                                      <ArrowDown className="h-3 w-3" />
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                             </div>
