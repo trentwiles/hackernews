@@ -744,6 +744,9 @@ func main() {
 			yourComment.ParentComment = parent
 		}
 
+		fmt.Printf("yourComment (full debug): %+v\n", yourComment)
+
+
 		var commentId string = db.InsertNewComment(yourComment)
 
 		return c.JSON(fiber.Map{

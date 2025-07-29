@@ -973,12 +973,12 @@ func InsertNewComment(comment Comment) string {
 
 	if comment.ParentComment != "" {
 		query := `
-			INSERT INTO comments (in_response_to, content, author, parent_comment)
-			VALUES ($1, $2, $3, $4)
+			INSERT INTO comments (in_response_to, content, author, parent_comment, flagged)
+			VALUES ($1, $2, $3, $4, $5)
 			RETURNING id;
 		`
 
-		err := GetDB().QueryRow(query, comment.InResponseTo, comment.Content, comment.Author, comment.ParentComment).Scan(&id)
+		err := GetDB().QueryRow(query, comment.InResponseTo, comment.Content, comment.Author, comment.ParentComment, false).Scan(&id)
 		if err != nil {
 			log.Fatal(err)
 		}

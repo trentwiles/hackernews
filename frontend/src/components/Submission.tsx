@@ -365,7 +365,7 @@ export default function Submission() {
         Authorization: "Bearer " + Cookies.get("token"),
       },
       body: JSON.stringify({
-        SubmissionId: sid,
+        InResponseTo: sid,
         Content: newComment,
         CaptchaToken: token,
       }),
@@ -616,8 +616,8 @@ export default function Submission() {
                                 )}
                                 
                                 {/* Comment voting buttons */}
-                                {currentUser && (
-                                  <div className="flex items-center gap-2 mt-2">
+                                <div className="flex items-center gap-2 mt-2">
+                                  {currentUser && (
                                     <Button
                                       variant={comment.isUpvoted ? "destructive" : "outline"}
                                       size="sm"
@@ -627,11 +627,13 @@ export default function Submission() {
                                     >
                                       <ArrowUp className="h-3 w-3" />
                                     </Button>
-                                    <Button variant="outline" size="sm" className="h-7 px-3">
-                                      <span className="text-xs font-medium">
-                                        {comment.upvotes - comment.downvotes} upvotes
-                                      </span>
-                                    </Button>
+                                  )}
+                                  <Button variant="outline" size="sm" className="h-7 px-3">
+                                    <span className="text-xs font-medium">
+                                      {comment.upvotes - comment.downvotes} upvotes
+                                    </span>
+                                  </Button>
+                                  {currentUser && (
                                     <Button
                                       variant={comment.isDownvoted ? "destructive" : "outline"}
                                       size="sm"
@@ -641,8 +643,8 @@ export default function Submission() {
                                     >
                                       <ArrowDown className="h-3 w-3" />
                                     </Button>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
