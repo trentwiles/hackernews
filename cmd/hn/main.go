@@ -754,14 +754,31 @@ func main() {
 
 	app.Get(version + "/comments", func(c *fiber.Ctx) error {
 		parent := c.Query("id") // submissionID
+		username := c.Query("username") // has comment been upvoted by ...
+
+
+
 		if parent == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Missing submission `id`",
 			})
 		}
 
+		msg := ``
+
+		if username == "" {
+			msg = "`username` parameter is NULL, meaning that hasUpvoted and hasDownvoted will always be false"
+		}
+
+		if msg != "" {
+			return c.JSON(fiber.Map{
+				"notice": msg,
+				"comments": db.GetCommentsOnSubmission(db.Submission{Id: parent}, db.User{Username: username}),
+			})
+		}
+
 		return c.JSON(fiber.Map{
-			"comments": db.GetCommentsOnSubmission(db.Submission{Id: parent}),
+			"comments": db.GetCommentsOnSubmission(db.Submission{Id: parent}, db.User{Username: username}),
 		})
 	})
 

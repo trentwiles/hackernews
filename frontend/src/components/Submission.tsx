@@ -50,6 +50,8 @@ type comment = {
   flagged: boolean;
   created_at: string;
   parent?: string;
+  upvotes: number;
+  downvotes: number;
 };
 
 export default function Submission() {
@@ -183,6 +185,8 @@ export default function Submission() {
               flagged: item.Flagged,
               id: item.Id,
               parent: item.ParentComment,
+              upvotes: item.Upvotes,
+              downvotes: item.Downvotes
             }
             res.push(tmp)
           })

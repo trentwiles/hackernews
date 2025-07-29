@@ -102,6 +102,8 @@ type Comment struct {
 	CreatedAt     string // timestamp in string format, typescript can interpret this as a Date object
 	Upvotes       int
 	Downvotes     int
+	HasUpvoted    bool // has the user in question upvoted this post? TRUE if so...
+	HasDownvoted  bool // has the user in question downvoted this post? TRUE if so...
 }
 
 // enum equiv in Go for audit log events
@@ -1000,10 +1002,14 @@ func InsertNewComment(comment Comment) string {
 	return id
 }
 
-func GetCommentsOnSubmission(submission Submission) []Comment {
+func GetCommentsOnSubmission(submission Submission, contextUser User) []Comment {
 	if submission.Id == "" {
 		log.Fatal("Please use an ID when searching for a submission's comments")
 	}
+
+	// if contextUser.Username == "" {
+	// 	log.Fatal("Please provide a valid username, so we can determine which comments the user has voted on")
+	// }
 
 	query := `
 		SELECT
@@ -1015,7 +1021,11 @@ func GetCommentsOnSubmission(submission Submission) []Comment {
 			c.flagged,
 			c.created_at,
 			COUNT(CASE WHEN cv.positive = TRUE THEN 1 END) AS upvotes,
-			COUNT(CASE WHEN cv.positive = FALSE THEN 1 END) AS downvotes
+			COUNT(CASE WHEN cv.positive = FALSE THEN 1 END) AS downvotes,
+			
+			-- TRUE if has voted, FALSE if hasn't voted, FALSE if no results in comment_votes (edge case)
+			COALESCE(BOOL_OR(cv.voter_username = $2 AND cv.positive = TRUE), FALSE) AS has_upvoted,
+			COALESCE(BOOL_OR(cv.voter_username = $2 AND cv.positive = FALSE), FALSE) AS has_downvoted
 		FROM comments c
 		LEFT JOIN comment_votes cv ON c.id = cv.comment_id
 		WHERE c.in_response_to = $1
@@ -1024,7 +1034,7 @@ func GetCommentsOnSubmission(submission Submission) []Comment {
 	`
 
 	// no limits/offset here at the moment, do this in a future update
-	rows, err := GetDB().Query(query, submission.Id)
+	rows, err := GetDB().Query(query, submission.Id, contextUser.Username)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1037,7 +1047,7 @@ func GetCommentsOnSubmission(submission Submission) []Comment {
 		var parentComment sql.NullString
 
 		var tempComment Comment
-		err := rows.Scan(&tempComment.Id, &tempComment.InResponseTo, &tempComment.Content, &tempComment.Author, &parentComment, &tempComment.Flagged, &tempComment.CreatedAt, &tempComment.Upvotes, &tempComment.Downvotes)
+		err := rows.Scan(&tempComment.Id, &tempComment.InResponseTo, &tempComment.Content, &tempComment.Author, &parentComment, &tempComment.Flagged, &tempComment.CreatedAt, &tempComment.Upvotes, &tempComment.Downvotes, &tempComment.HasUpvoted, &tempComment.HasDownvoted)
 		if err != nil {
 			log.Fatal(err)
 		}

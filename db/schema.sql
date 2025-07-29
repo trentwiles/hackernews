@@ -79,7 +79,8 @@ CREATE TABLE IF NOT EXISTS votes (
     positive BOOLEAN NOT NULL,
     -- true = upvote, false = downvote
     FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
-    FOREIGN KEY (voter_username) REFERENCES users(username) ON DELETE CASCADE
+    FOREIGN KEY (voter_username) REFERENCES users(username) ON DELETE CASCADE,
+    UNIQUE(submission_id, voter_username)
 );
 -- note: use a recursive query to build a comment chain (via self join)
 -- FK summary:
@@ -107,9 +108,11 @@ CREATE TABLE IF NOT EXISTS comment_votes (
     ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     positive BOOLEAN NOT NULL,
     -- true = upvote, false = downvote
-    FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
-    FOREIGN KEY (voter_username) REFERENCES users(username) ON DELETE CASCADE
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (voter_username) REFERENCES users(username) ON DELETE CASCADE,
+    UNIQUE(comment_id, voter_username)
 );
+
 
 CREATE TABLE IF NOT EXISTS admins (
     username VARCHAR(100) PRIMARY KEY,
