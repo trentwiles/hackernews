@@ -801,6 +801,32 @@ func main() {
 		})
 	})
 
+	app.Post(version+"/commentVote", func(c *fiber.Ctx) error {
+		var req VoteRequest
+
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		if req.Id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "missing valid comment `id` parameter",
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"success": db.VoteOnComment(db.User{Username: username}, db.Comment{Id: req.Id}, req.Upvote),
+		})
+	})
+
 	// 404
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Route not found", "status": 404})

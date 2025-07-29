@@ -309,14 +309,14 @@ export default function Submission() {
     );
 
     // Make API call
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comment/vote", {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/commentVote", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + Cookies.get("token"),
       },
       body: JSON.stringify({
-        CommentId: commentId,
+        Id: commentId,
         Upvote: intent,
       }),
     })
