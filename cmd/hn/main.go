@@ -14,6 +14,7 @@ import (
 
 	// my packages
 	"github.com/trentwiles/hackernews/internal/captcha"
+	"github.com/trentwiles/hackernews/internal/config"
 	"github.com/trentwiles/hackernews/internal/db"
 	"github.com/trentwiles/hackernews/internal/email"
 	"github.com/trentwiles/hackernews/internal/jwt"
@@ -78,6 +79,13 @@ func main() {
 	app.Static("/", "./static")
 
 	log.Println("[INFO] Started webserver with CORS & Logging middleware")
+
+	config.LoadEnv()
+	expiresString := config.GetEnv("TOKENS_EXPIRE_IN")
+	TOKEN_EXPIRES_IN, err := strconv.Atoi(expiresString)
+	if err != nil {
+		log.Fatalf("Invalid TOKENS_EXPIRE_IN (parse error): %v", err)
+	}
 
 	// app.Get("/", func(c *fiber.Ctx) error {
 	// 	success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
@@ -182,7 +190,7 @@ func main() {
 		}
 
 		var jwtToken string
-		jwtToken, err := jwt.GenerateJWT(user.Username, 60)
+		jwtToken, err := jwt.GenerateJWT(user.Username, TOKEN_EXPIRES_IN)
 
 		if err != nil {
 			log.Fatal(err)
@@ -825,6 +833,39 @@ func main() {
 		return c.JSON(fiber.Map{
 			"success": db.VoteOnComment(db.User{Username: username}, db.Comment{Id: req.Id}, req.Upvote),
 		})
+	})
+
+	app.Post(version + "/generateKey", func(c *fiber.Ctx) error) {
+		// here's the catch: to create an API key, you must already be authenticated,
+		// that is, you must click on the code in your email, then log in
+		// in the future, I'll consider developing a way to 
+	}
+
+	app.Get(version + "/generateAuthToken", func(c *fiber.Ctx) error {
+		key := c.Query("apiKey")
+		if key == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Please pass a `apiKey` parameter",
+			})
+		}
+
+		var discoveredUser db.User = db.ValidateUserAPIKey(key)
+		if discoveredUser.Username == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Invalid API key",
+			})
+		}
+
+		var jwtToken string
+		jwtToken, err := jwt.GenerateJWT(discoveredUser.Username, TOKEN_EXPIRES_IN)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// treat this authToken as a regular token that can be passed to any endpoint
+		// expiresIn will be in minutes, and can be changed in the root .env file
+		return c.JSON(fiber.Map{"username": discoveredUser.Username, "authToken": jwtToken, "expiresIn": TOKEN_EXPIRES_IN, "comment": "Treat this authToken as a regular token that can be passed to any endpoint"})
 	})
 
 	// 404

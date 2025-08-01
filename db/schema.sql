@@ -119,3 +119,10 @@ CREATE TABLE IF NOT EXISTS admins (
     remarks TEXT,
     FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
+
+-- users for automated access (API)
+CREATE TABLE api_tokens (
+    username VARCHAR(100) PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+)

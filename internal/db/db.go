@@ -1135,3 +1135,62 @@ func VoteOnComment(user User, comment Comment, isUpvote bool) bool {
 	log.Printf("[INFO] Updated comment vote from a %s by user %s\n", updated, user.Username)
 	return true
 }
+
+func CreateUserAPIKey(user User) string {
+	if user.Username == "" {
+		log.Fatal("Cannot create API key for a blank user")
+	}
+
+	userQuery := SearchUser(user).User
+	
+	if userQuery.Username == "" {
+		log.Fatalf("Cannot create API key for non-existant user (%s)", user.Username)
+	}
+
+	// two checks in one: check that the user exists in the users table,
+	// then check that they exist in the 
+
+	var exists bool
+	err := GetDB().QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = $1) AND EXISTS(SELECT 1 FROM api_tokens WHERE username = $1)", user.Username).Scan(&exists)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if (exists) {
+		log.Printf("[INFO] Failed to create a new API key for user %s, already exists (future: rotate?)\n", user.Username)
+		return ""
+	}
+	
+	// otherwise, move on and create another API key
+
+	query := `INSERT INTO api_tokens (username, token) VALUES ($1, $2)`
+
+	var token string = SecureToken(100)
+
+	_, err = GetDB().Exec(query, user.Username, token)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return token
+}
+
+func ValidateUserAPIKey(token string) User {
+	if token == "" {
+		log.Fatal("Cannot validate blank API token")
+	}
+
+	var username string
+	err := GetDB().QueryRow("SELECT username FROM api_tokens WHERE token = $1", token).Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("[WARN] Requested token %s did not yield any users in database\n", token)
+			return User{}
+		}else{
+			log.Fatal(err)
+		}
+	}
+
+	log.Printf("[INFO] API key request resulted in user %s\n", username)
+	return User{Username: username}	
+}
