@@ -835,38 +835,43 @@ func main() {
 		})
 	})
 
-	app.Post(version + "/generateKey", func(c *fiber.Ctx) error) {
+	app.Post(version + "/generateKey", func(c *fiber.Ctx) error {
 		// here's the catch: to create an API key, you must already be authenticated,
 		// that is, you must click on the code in your email, then log in
-		// in the future, I'll consider developing a way to 
-	}
+		// in the future, I'll consider developing a way to avoid email
 
-	app.Get(version + "/generateAuthToken", func(c *fiber.Ctx) error {
-		key := c.Query("apiKey")
-		if key == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Please pass a `apiKey` parameter",
-			})
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
 		}
 
-		var discoveredUser db.User = db.ValidateUserAPIKey(key)
-		if discoveredUser.Username == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Invalid API key",
-			})
-		}
+		var key string = db.CreateUserAPIKey(db.User{Username: username})
 
-		var jwtToken string
-		jwtToken, err := jwt.GenerateJWT(discoveredUser.Username, TOKEN_EXPIRES_IN)
+		// by this stage, we assume the username is valid
+		log.Printf("[WARN] Created API key for user %s, but no check was made that this user has already created an API key (future: add this)\n", username)
 
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// treat this authToken as a regular token that can be passed to any endpoint
-		// expiresIn will be in minutes, and can be changed in the root .env file
-		return c.JSON(fiber.Map{"username": discoveredUser.Username, "authToken": jwtToken, "expiresIn": TOKEN_EXPIRES_IN, "comment": "Treat this authToken as a regular token that can be passed to any endpoint"})
+		return c.JSON(fiber.Map{"username": username, "apiKey": key, "comment": "Store this API key in a safe place."})
 	})
+
+	app.Post(version + "/generateKey", func(c *fiber.Ctx) error {
+		// here's the catch: to create an API key, you must already be authenticated,
+		// that is, you must click on the code in your email, then log in
+		// in the future, I'll consider developing a way to avoid email
+
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		// by this stage, we assume the username is valid
+
+		var key string = db.CreateUserAPIKey(db.User{Username: username})
+
+		return c.JSON(fiber.Map{"username": username, "apiKey": key, "comment": "Store this API key in a safe place."})
+	})
+
 
 	// 404
 	app.Use(func(c *fiber.Ctx) error {
