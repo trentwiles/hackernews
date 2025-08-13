@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"strconv"
 
 	"golang.org/x/net/html"
@@ -873,8 +875,29 @@ func main() {
 		return c.JSON(fiber.Map{"username": username, "apiKey": key, "comment": "Store this API key in a safe place."})
 	})
 
-	app.Get(version + "/dump", func(c *fiber.Ctx) error {
-		dump.DumpForUser(db.User{Username: "trent"})
+	app.Post(version + "/dump", func(c *fiber.Ctx) error {
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		// future: add ratelimit/cooldown period
+
+		var dumpLocation string = dump.DumpForUser(db.User{Username: username})
+		// for the user example, the dump would be stored at exports\example\
+
+		cmd := exec.Command("zip", "-r", "export/" + username + ".zip", dumpLocation)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			log.Println("[WARN] Error running zip on dump:", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "internal zipping error, please contact site administrator if you see this message",
+			})
+		}
 		return c.JSON(fiber.Map{})
 	})
 

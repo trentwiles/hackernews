@@ -8,7 +8,8 @@ import (
 	"github.com/trentwiles/hackernews/internal/db"
 )
 
-func DumpForUser(user db.User) bool {
+// returns folder path of data dump
+func DumpForUser(user db.User) string {
     // BEFORE RUNNING, we assume user exists and is authorized to access this data (that'll be handled via the API)
     // included in a user dump:
     // 1. user metadata
@@ -25,19 +26,19 @@ func DumpForUser(user db.User) bool {
     os.MkdirAll(exportDir, 0755)
     
     if !writeJSONToFile(userMeta, exportDir+"/user.json") {
-        return false
+        return ""
     }
     if !writeJSONToFile(userSubmissions, exportDir+"/submissions.json") {
-        return false
+        return ""
     }
     if !writeJSONToFile(userComments, exportDir+"/comments.json") {
-        return false
+        return ""
     }
     if !writeJSONToFile(userVotes, exportDir+"/votes.json") {
-        return false
+        return ""
     }
     
-    return true
+    return exportDir
 }
 
 func writeJSONToFile(data interface{}, filepath string) bool {
