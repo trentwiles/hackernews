@@ -22,6 +22,7 @@ import Forbidden from "./components/Forbidden";
 import { Helmet } from "react-helmet";
 import ReactGA from "react-ga4";
 import { useEffect } from "react";
+import Privacy from "./components/Privacy";
 
 const SERVICE_NAME = import.meta.env.VITE_SERVICE_NAME;
 
@@ -224,6 +225,19 @@ function App() {
                       <title>Settings | {SERVICE_NAME}</title>
                     </Helmet>
                     <Settings />
+                  </>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account/privacy"
+              element={
+                <ProtectedRoute>
+                  <>
+                    <Helmet>
+                      <title>Privacy Settings | {SERVICE_NAME}</title>
+                    </Helmet>
+                    <Privacy />
                   </>
                 </ProtectedRoute>
               }

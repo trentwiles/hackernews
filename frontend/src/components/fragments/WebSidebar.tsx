@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import {
   CirclePlus,
   Command,
+  Eye,
   FileStack,
   ListFilterPlus,
   LogIn,
@@ -164,6 +165,16 @@ export default function WebSidebar() {
                   <Link to="/account/settings">
                     <Settings />
                     <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* PRIVACY BUTTON */}
+              <SidebarMenuItem key={"privacy"}>
+                <SidebarMenuButton asChild>
+                  <Link to="/account/privacy">
+                    <Eye />
+                    <span>Privacy</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
