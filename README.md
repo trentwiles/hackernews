@@ -6,7 +6,7 @@
 
 # Setup
 
-*See `docs/SETUP.md` for production and development setups.*
+_See `docs/SETUP.md` for production and development setups._
 
 # Versioning Goals
 
@@ -15,13 +15,14 @@
 ### Features
 
 - Magic Link login system (password free, managed by JWT tokens)
-- Submission Posting (with full Google Captcha v3 support)
-- Submission Voting (upvotes/downvotes, options to sort by votes)
+- Submission/Comment Posting (with full Google Captcha v3 support)
+- Submission/Comment Voting (upvotes/downvotes, options to sort by votes)
 - User bio/birthday/full name customization on "account settings" page
 - Command line logging (HTTP request logging + logging from business logic files)
 - `.env` config files used on frontend & backend
 
 ### In Progress
+
 - Basic admin page (basic website metrics)
 - Name change!
 
@@ -29,7 +30,6 @@
 
 ### In Progress
 
-- Comments (and comment threads)
 - Ability to report a post (and maybe a user?)
 - Fully working admin page (view/delete flagged posts, delete users, view full website metrics)
 - Clean up error handling (mostly using Log.fatal now, not great for production as this kills the program)
@@ -42,21 +42,20 @@
 
 ## Feature Implementation Checklist
 
-| Feature                | API Status     | Web Status     | Notes                                                                                                       |
-| ---------------------- | -------------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
-| Login via Magic Link   | ✅ Complete    | ✅ Complete    | JWT-based authentication, cannot be done over `eduroam` because they block outbound email port connections. |
-| Magic Link accept page | ✅ Complete    | ✅ Complete    | Page where the server validates the magic link found in the email, and adds the token to browser cookies    |
-| News/Submission Feed   | 🟡 In Progress | 🟡 In Progress | Need to complete different kinds of sorts (newest, best, oldest), and requires pagination                   |
-| Post Submission        | ✅ Complete    | ✅ Complete    |                                                                                                             |
-| User Profile Page      | ✅ Complete    | ✅ Complete    |                                                                                                             |
-| Comments               | ⬜ Not Started | ⬜ Not Started | SQL implementation is complete                                                                              |
-| Admin Console          | 🟡 In Progress | ⬜ Not Started | SQL implementation completed; added isAdmin to user API                                                     |
+| Feature                | API Status     | Web Status     | Notes                                                                                                             |
+| ---------------------- | -------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Login via Magic Link   | ✅ Complete    | ✅ Complete    | JWT-based authentication, cannot be done over `eduroam` because they block outbound email port connections.       |
+| Magic Link accept page | ✅ Complete    | ✅ Complete    | Page where the server validates the magic link found in the email, and adds the token to browser cookies          |
+| News/Submission Feed   | ✅ Complete    | ✅ Complete    | Need to complete different kinds of sorts (newest, best, oldest), and requires pagination                         |
+| Post Submission        | ✅ Complete    | ✅ Complete    |                                                                                                                   |
+| User Profile Page      | ✅ Complete    | ✅ Complete    |                                                                                                                   |
+| Comments               | ✅ Complete    | ✅ Complete    | Future: implement replies to other comments                                                                                    |
+| Admin Console          | 🟡 In Progress | 🟡 In Progress | Lacking moderation features (view flagged posts, delete posts, delete users, see recent/problematic user signups) |
 
 ## To Do
 
 - Modularize routes
 - Improved error handling (ie. stop using `log.Fatal` and start using `fmt.Errorf`)
-- New name
 
 ## Route Modularization File Structure
 
@@ -80,4 +79,4 @@ HTTP request logging is done by a built in middleware for Fiber. Other logs are 
 | `[WARN]`  | Some sort of failure took place, wasn't fatal                    |
 | `[FATAL]` | Error that killed the program took place, pay attention to these |
 
-Future: toggle logging via `.env` (`PRODUCTION=true`), see this [ChatGPT conversion](https://chatgpt.com/share/68701ac1-5848-800a-9325-aea6489727a8) for more on that.
+Future: toggle logging via `.env` (`PRODUCTION=true`), see this [ChatGPT conversation](https://chatgpt.com/share/68701ac1-5848-800a-9325-aea6489727a8) for more on that.

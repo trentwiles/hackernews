@@ -16,6 +16,7 @@ import (
 	"github.com/trentwiles/hackernews/internal/captcha"
 	"github.com/trentwiles/hackernews/internal/config"
 	"github.com/trentwiles/hackernews/internal/db"
+	"github.com/trentwiles/hackernews/internal/dump"
 	"github.com/trentwiles/hackernews/internal/email"
 	"github.com/trentwiles/hackernews/internal/jwt"
 	"github.com/trentwiles/hackernews/internal/utils"
@@ -870,6 +871,11 @@ func main() {
 		var key string = db.CreateUserAPIKey(db.User{Username: username})
 
 		return c.JSON(fiber.Map{"username": username, "apiKey": key, "comment": "Store this API key in a safe place."})
+	})
+
+	app.Get(version + "/dump", func(c *fiber.Ctx) error {
+		dump.DumpForUser(db.User{Username: "trent"})
+		return c.JSON(fiber.Map{})
 	})
 
 

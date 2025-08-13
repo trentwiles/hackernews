@@ -6,3 +6,5 @@ tmp/
 testdata/
 dist/
 build/
+.dump
+exports/

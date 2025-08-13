@@ -14,7 +14,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const DEFAULT_SELECT_LIMIT = 10
+var DEFAULT_SELECT_LIMIT = 10
 
 // sql database pool
 var (
@@ -126,6 +126,13 @@ const (
 	Oldest SortMethod = "oldest"
 	Best   SortMethod = "best"
 )
+
+func UpdateSelectLimit(newLimit int) {
+	if (newLimit <= 0) {
+		log.Fatal("[FATAL] Cannot set default limit to <= 0")
+	}
+	DEFAULT_SELECT_LIMIT = newLimit
+}
 
 func InitDB() error {
 	var err error
@@ -459,6 +466,43 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 	}
 
 	log.Printf("[INFO] Query resulted in %d submissions\n", len(submissions))
+
+	return submissions
+}
+
+func LatestUserComments(offset int, user User) []Comment {
+	query := `
+		SELECT id, in_response_to, content, author, parent_comment, flagged, created_at
+		FROM comments
+		WHERE author = $1 AND flagged = false
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := GetDB().Query(query, user.Username, DEFAULT_SELECT_LIMIT, offset)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var submissions []Comment
+	for rows.Next() {
+		var current Comment
+		var pc sql.NullString
+
+		if err := rows.Scan(&current.Id, &current.InResponseTo, &current.Content, &current.Author, &pc, &current.Flagged, &current.CreatedAt); err != nil {
+			log.Fatal(err)
+		}
+
+		if pc.String != "" {
+			current.ParentComment = pc.String
+		} else {
+			current.ParentComment = ""
+		}
+
+		submissions = append(submissions, current)
+	}
+
+	log.Printf("[INFO] Latest user comments query for %s resulted in %d, using a limit of %d\n", user.Username, len(submissions), offset)
 
 	return submissions
 }
