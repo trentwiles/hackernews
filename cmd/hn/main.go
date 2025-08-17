@@ -51,7 +51,7 @@ type SubmissionDeleteRequest struct {
 
 type CommentCreationRequest struct {
 	InResponseTo string `json:"inResponseTo"`
-	Content string `json:"content"`
+	Content      string `json:"content"`
 	CaptchaToken string `json:"captchaToken"`
 }
 
@@ -757,20 +757,17 @@ func main() {
 
 		fmt.Printf("yourComment (full debug): %+v\n", yourComment)
 
-
 		var commentId string = db.InsertNewComment(yourComment)
 
 		return c.JSON(fiber.Map{
-			"success": true,
+			"success":   true,
 			"commentID": commentId,
 		})
 	})
 
-	app.Get(version + "/comments", func(c *fiber.Ctx) error {
-		parent := c.Query("id") // submissionID
+	app.Get(version+"/comments", func(c *fiber.Ctx) error {
+		parent := c.Query("id")         // submissionID
 		username := c.Query("username") // has comment been upvoted by ...
-
-
 
 		if parent == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -786,7 +783,7 @@ func main() {
 
 		if msg != "" {
 			return c.JSON(fiber.Map{
-				"notice": msg,
+				"notice":   msg,
 				"comments": db.GetCommentsOnSubmission(db.Submission{Id: parent}, db.User{Username: username}),
 			})
 		}
@@ -796,7 +793,7 @@ func main() {
 		})
 	})
 
-	app.Delete(version + "/comment", func(c *fiber.Ctx) error {
+	app.Delete(version+"/comment", func(c *fiber.Ctx) error {
 		id := c.Query("id")
 		if id == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -838,7 +835,7 @@ func main() {
 		})
 	})
 
-	app.Post(version + "/generateKey", func(c *fiber.Ctx) error {
+	app.Post(version+"/generateKey", func(c *fiber.Ctx) error {
 		// here's the catch: to create an API key, you must already be authenticated,
 		// that is, you must click on the code in your email, then log in
 		// in the future, I'll consider developing a way to avoid email
@@ -857,7 +854,7 @@ func main() {
 		return c.JSON(fiber.Map{"username": username, "apiKey": key, "comment": "Store this API key in a safe place."})
 	})
 
-	app.Post(version + "/generateKey", func(c *fiber.Ctx) error {
+	app.Post(version+"/generateKey", func(c *fiber.Ctx) error {
 		// here's the catch: to create an API key, you must already be authenticated,
 		// that is, you must click on the code in your email, then log in
 		// in the future, I'll consider developing a way to avoid email
@@ -875,7 +872,7 @@ func main() {
 		return c.JSON(fiber.Map{"username": username, "apiKey": key, "comment": "Store this API key in a safe place."})
 	})
 
-	app.Post(version + "/dump", func(c *fiber.Ctx) error {
+	app.Post(version+"/dump", func(c *fiber.Ctx) error {
 		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
 
 		if !success {
@@ -887,7 +884,7 @@ func main() {
 		var dumpLocation string = dump.DumpForUser(db.User{Username: username})
 		// for the user example, the dump would be stored at exports\example\
 
-		cmd := exec.Command("zip", "-r", "exports/" + username + ".zip", dumpLocation)
+		cmd := exec.Command("zip", "-r", "exports/"+username+".zip", dumpLocation)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
@@ -904,7 +901,7 @@ func main() {
 		})
 	})
 
-	app.Get(version + "/dump", func(c *fiber.Ctx) error {
+	app.Get(version+"/dump", func(c *fiber.Ctx) error {
 		// checks if the current logged in user has an available dump
 
 		auth := c.Query("authToken")
@@ -930,6 +927,18 @@ func main() {
 		return c.SendFile("exports/" + username + ".zip")
 	})
 
+	app.Get(version+"/clean", func(c *fiber.Ctx) error {
+		// remove temporary files:
+		// "exports" directory
+
+		// again, in the future check if the user is an admin, but for MVP, it doesn't really matter
+
+		return c.Status(fiber.StatusAccepted).JSON(
+			fiber.Map{
+				"status": dump.WipeExports() == nil,
+			},
+		)
+	})
 
 	// 404
 	app.Use(func(c *fiber.Ctx) error {

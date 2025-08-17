@@ -19,6 +19,7 @@ import { FileText, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -39,30 +40,58 @@ export default function AdminPanel() {
   const [totalPosts, setTotalPosts] = useState<number>(-1);
   const [isPending, setIsPending] = useState<boolean>(true);
   const [isError, setIsError] = useState<boolean>(false);
+  const [cleanFilesText, setCleanFilesText] = useState<string>(
+    "Clean Temporary Files"
+  );
+  const [cleanFilesEnabled, setCleanFilesEnabled] = useState<boolean>(true);
+
+  function wipeTempFiles() {
+    setCleanFilesEnabled(false);
+    setCleanFilesText("Please wait...");
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/clean", {
+      headers: {
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(() => {
+        setCleanFilesText("Successfuly Cleaned Temporary Files!");
+      })
+      .catch((err) => {
+        console.error(err);
+        setCleanFilesText("Internal Error, Try Again Later");
+        return;
+      });
+  }
 
   useEffect(() => {
     // first check admin status
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/checkAdmin", {
       headers: {
         Authorization: "Bearer " + Cookies.get("token"),
-      }
+      },
     })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
-      }
-      return res.json();
-    })
-    .then((json) => {
-      if (json.isAdmin === undefined || !json.isAdmin) {
-        throw new Error(`no admin perms`)
-      }
-    })
-    .catch((err) => {
-      console.error(err)
-      navigate("/403")
-      return
-    });
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((json) => {
+        if (json.isAdmin === undefined || !json.isAdmin) {
+          throw new Error(`no admin perms`);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        navigate("/403");
+        return;
+      });
 
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/adminMetrics")
       .then((response) => {
@@ -233,6 +262,24 @@ export default function AdminPanel() {
                 </div>
               </div>
             )}
+
+            {/* Bottom card: admin tools (just clean files for the moment) */}
+            <Card className="flex-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-large">
+                  Admin Tools
+                </CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => wipeTempFiles()}
+                  disabled={!cleanFilesEnabled}
+                >
+                  {cleanFilesText}
+                </Button>
+              </CardContent>
+            </Card>
 
             {isError && (
               <Card>
