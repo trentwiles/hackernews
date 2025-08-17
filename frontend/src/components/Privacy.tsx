@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 export default function Privacy() {
   const [buttonText, setButtonText] = useState<string>("Export Your Data");
   const [buttonEnabled, setButtonEnabled] = useState<boolean>(true);
+  const [exportComplete, setExportComplete] = useState<boolean>(false);
 
   function exportData() {
     setButtonText("Processing Request...");
@@ -27,11 +28,21 @@ export default function Privacy() {
       })
       .then(() => {
         setButtonText("Request Submitted");
+        setExportComplete(true);
       })
       .catch((err) => {
         console.error(err);
         setButtonText("Issue Sending Request.. Try Again Later");
       });
+  }
+
+  function downloadData() {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/dump", {
+      headers: {
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      method: "GET",
+    });
   }
 
   return (
@@ -64,6 +75,14 @@ export default function Privacy() {
                   Depending on how much information you have, this process could
                   take a few minutes to a few hours.
                 </p>
+                {exportComplete && (
+                  <>
+                    <p>
+                      <span style={{ color: `green` }}>Export complete.</span>
+                      <a href={import.meta.env.VITE_API_ENDPOINT + "/api/v1/dump?authToken=" + Cookies.get("token")} target="_blank">Click here to download.</a>
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

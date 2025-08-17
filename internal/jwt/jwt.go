@@ -91,3 +91,19 @@ func ParseAuthHeader(header string) (bool, string) {
 
 	return (username != ""), username
 }
+
+func ParseAuthString(authString string) (bool, string) {
+	username, err := VerifyJWT(authString)
+
+	if err != nil {
+		return false, ""
+	}
+
+	if username != "" {
+		log.Printf("[INFO] Token length %d for username %s parsed by backend\n", len([]rune(authString)), username)
+	} else {
+		log.Printf("[WARN] Attempted to parse JWT token of length %d, no username retrived\n", len([]rune(authString)))
+	}
+
+	return (username != ""), username
+}

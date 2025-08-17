@@ -887,7 +887,7 @@ func main() {
 		var dumpLocation string = dump.DumpForUser(db.User{Username: username})
 		// for the user example, the dump would be stored at exports\example\
 
-		cmd := exec.Command("zip", "-r", "export/" + username + ".zip", dumpLocation)
+		cmd := exec.Command("zip", "-r", "exports/" + username + ".zip", dumpLocation)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
@@ -898,7 +898,36 @@ func main() {
 				"message": "internal zipping error, please contact site administrator if you see this message",
 			})
 		}
-		return c.JSON(fiber.Map{})
+
+		return c.JSON(fiber.Map{
+			"success": true,
+		})
+	})
+
+	app.Get(version + "/dump", func(c *fiber.Ctx) error {
+		// checks if the current logged in user has an available dump
+
+		auth := c.Query("authToken")
+
+		if auth == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(BasicResponse{Message: "missing authorization token", Status: fiber.StatusUnauthorized})
+		}
+
+		success, username := jwt.ParseAuthString(auth)
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		_, err := os.Stat("exports/" + username + ".zip")
+		if err != nil {
+			return c.Status(fiber.StatusGone).JSON(fiber.Map{
+				"success": false,
+				"message": "Data dump was either already downloaded or never created",
+			})
+		}
+
+		return c.SendFile("exports/" + username + ".zip")
 	})
 
 
