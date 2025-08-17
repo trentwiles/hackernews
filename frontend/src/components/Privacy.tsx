@@ -36,15 +36,6 @@ export default function Privacy() {
       });
   }
 
-  function downloadData() {
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/dump", {
-      headers: {
-        Authorization: "Bearer " + Cookies.get("token"),
-      },
-      method: "GET",
-    });
-  }
-
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -79,7 +70,7 @@ export default function Privacy() {
                   <>
                     <p>
                       <span style={{ color: `green` }}>Export complete.</span>
-                      <a href={import.meta.env.VITE_API_ENDPOINT + "/api/v1/dump?authToken=" + Cookies.get("token")} target="_blank">Click here to download.</a>
+                      <a href={import.meta.env.VITE_API_ENDPOINT + "/api/v1/dump?authToken=" + Cookies.get("token")} target="_blank">&nbsp;Click here to download.</a>
                     </p>
                   </>
                 )}
