@@ -21,11 +21,6 @@ _See `docs/SETUP.md` for production and development setups._
 - Command line logging (HTTP request logging + logging from business logic files)
 - `.env` config files used on frontend & backend
 
-### In Progress
-
-- Basic admin page (basic website metrics)
-- Name change!
-
 ## Beta ("version two", v0.2.0)
 
 ### In Progress

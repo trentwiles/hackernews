@@ -125,4 +125,25 @@ CREATE TABLE api_tokens (
     username VARCHAR(100) PRIMARY KEY,
     token VARCHAR(255) NOT NULL,
     FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
-)
+);
+
+-- table of reports: both comments and posts
+-- REPORT WEIGHT CHART
+-- |------------------|---------------|
+-- | Account Age      | Report Weight |
+-- |------------------|---------------|
+-- | < 1 day          |   0.1         |
+-- | 1 day - 7 days   |   0.25        |
+-- | 7 days - 28 days |   0.33        |
+-- | 28+ days         |   0.5         |
+-- |------------------|---------------|
+
+CREATE TABLE reports (
+    id SERIAL PRIMARY KEY,
+    reporter VARCHAR(100) NOT NULL REFERENCES users(username),
+    target_type VARCHAR(20) NOT NULL,  -- 'post', 'comment'
+    target_id UUID NOT NULL,            -- references post.id OR comment.id (i don't know if there is a way to check this)
+    target_user VARCHAR(100) NOT NULL REFERENCES users(username),
+    rweight FLOAT NOT NULL, -- "weight" of the report (logic determined on frontend)
+    created_at TIMESTAMP DEFAULT NOW()
+);
