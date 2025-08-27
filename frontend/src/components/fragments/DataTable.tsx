@@ -27,8 +27,8 @@ type Submission = {
   Link: string;
   Body: string;
   Created_at: string;
+  Flagged: boolean;
 };
-
 
 function buildNextFetch(filter: string, offset: number): string {
   return `/api/v1/all?sort=${filter}&offset=${offset}`;
@@ -66,11 +66,11 @@ export default function DataTable(props: props) {
       .then((json) => {
         if (json.results == null) {
           setSubmission([]);
-        }else{
+        } else {
           const res: Submission[] = json.results;
           setSubmission(res);
         }
-        
+
         setIsPending(false);
       })
       .catch((err: Error) => {
@@ -148,9 +148,26 @@ export default function DataTable(props: props) {
             submission.map((s) => (
               <TableRow key={s.Id}>
                 <TableCell className="font-medium py-4">
-                  <a href={s.Link} target="_blank" className="hover:underline">
-                    {truncate(s.Title)}
-                  </a>
+                  {/* if the post is flagged, mute out the <a> tag */}
+                  {s.Flagged && (
+                    <a
+                      href={s.Link}
+                      target="_blank"
+                      className="hover:underline text-muted-foreground"
+                    >
+                      ⚠️{truncate(s.Title)}⚠️
+                    </a>
+                  )}
+                  {/* otherwise, just use a normal <a> tag */}
+                  {!s.Flagged && (
+                    <a
+                      href={s.Link}
+                      target="_blank"
+                      className="hover:underline"
+                    >
+                      {truncate(s.Title)}
+                    </a>
+                  )}
                 </TableCell>
                 <TableCell className="py-4">
                   <Link

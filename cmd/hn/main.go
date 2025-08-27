@@ -759,6 +759,8 @@ func main() {
 		if parent != "" {
 			yourComment.ParentComment = parent
 		}
+		
+		yourComment.Flagged = false
 
 		fmt.Printf("yourComment (full debug): %+v\n", yourComment)
 

@@ -437,7 +437,7 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 	}
 
 	query := `
-			SELECT submissions.id, username, title, link, body, created_at, 
+			SELECT submissions.id, username, title, link, body, created_at, flagged,
 				SUM(CASE 
 					WHEN votes.positive = true THEN 1 
 					WHEN votes.positive = false THEN -1 
@@ -445,7 +445,6 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 				END) AS score
 			FROM submissions
 			LEFT JOIN votes ON submissions.id = votes.submission_id
-			WHERE flagged = false
 			GROUP BY submissions.id
 			` + order + `
 			LIMIT $1 OFFSET $2`
@@ -463,7 +462,7 @@ func AllSubmissions(sort SortMethod, offset int) []Submission {
 		var tempBody sql.NullString
 		var current Submission
 
-		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &tempBody, &current.Created_at, &current.Votes); err != nil {
+		if err := rows.Scan(&current.Id, &current.Username, &current.Title, &current.Link, &tempBody, &current.Created_at, &current.Flagged, &current.Votes); err != nil {
 			log.Fatal(err)
 		}
 
@@ -485,7 +484,8 @@ func LatestUserComments(offset int, user User) []Comment {
 	query := `
 		SELECT id, in_response_to, content, author, parent_comment, flagged, created_at
 		FROM comments
-		WHERE author = $1 AND flagged = false
+		WHERE author = $1
+		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3
 	`
 
@@ -522,7 +522,7 @@ func LatestUserSubmissions(offset int, user User) []BasicSubmission {
 	query := `
 		SELECT id, title, link, created_at
 		FROM submissions
-		WHERE username = $1 AND flagged = false
+		WHERE username = $1
 		LIMIT $2 OFFSET $3
 	`
 
@@ -846,6 +846,7 @@ func SearchSubmissionByQuery(query string, offset int) []Submission {
 		return []Submission{}
 	}
 
+	// flagged submissions don't appear in search, change in the future?
 	q := `
 		SELECT * FROM submissions
 		WHERE flagged = false
@@ -1041,12 +1042,12 @@ func InsertNewComment(comment Comment) string {
 		log.Printf("[INFO] Database made comment insertion in response to %s WITH a parent comment\n", comment.InResponseTo)
 	} else {
 		query := `
-			INSERT INTO comments (in_response_to, content, author)
-			VALUES ($1, $2, $3)
+			INSERT INTO comments (in_response_to, content, author, flagged)
+			VALUES ($1, $2, $3, $4)
 			RETURNING id;
 		`
 
-		err := GetDB().QueryRow(query, comment.InResponseTo, comment.Content, comment.Author).Scan(&id)
+		err := GetDB().QueryRow(query, comment.InResponseTo, comment.Content, comment.Author, false).Scan(&id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -1085,7 +1086,7 @@ func GetCommentsOnSubmission(submission Submission, contextUser User) []Comment 
 		LEFT JOIN comment_votes cv ON c.id = cv.comment_id
 		WHERE c.in_response_to = $1
 		GROUP BY c.id, c.in_response_to, c.content, c.author, c.parent_comment, c.flagged, c.created_at
-		ORDER BY c.created_at;	
+		ORDER BY c.created_at DESC;	
 	`
 
 	// no limits/offset here at the moment, do this in a future update
