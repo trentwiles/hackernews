@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -128,7 +129,7 @@ const (
 )
 
 func UpdateSelectLimit(newLimit int) {
-	if (newLimit <= 0) {
+	if newLimit <= 0 {
 		log.Fatal("[FATAL] Cannot set default limit to <= 0")
 	}
 	DEFAULT_SELECT_LIMIT = newLimit
@@ -1186,13 +1187,13 @@ func CreateUserAPIKey(user User) string {
 	}
 
 	userQuery := SearchUser(user).User
-	
+
 	if userQuery.Username == "" {
 		log.Fatalf("Cannot create API key for non-existant user (%s)", user.Username)
 	}
 
 	// two checks in one: check that the user exists in the users table,
-	// then check that they exist in the 
+	// then check that they exist in the
 
 	var exists bool
 	err := GetDB().QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = $1) AND EXISTS(SELECT 1 FROM api_tokens WHERE username = $1)", user.Username).Scan(&exists)
@@ -1200,11 +1201,11 @@ func CreateUserAPIKey(user User) string {
 		log.Fatal(err)
 	}
 
-	if (exists) {
+	if exists {
 		log.Printf("[INFO] Failed to create a new API key for user %s, already exists (future: rotate?)\n", user.Username)
 		return ""
 	}
-	
+
 	// otherwise, move on and create another API key
 
 	query := `INSERT INTO api_tokens (username, token) VALUES ($1, $2)`
@@ -1230,11 +1231,125 @@ func ValidateUserAPIKey(token string) User {
 		if err == sql.ErrNoRows {
 			log.Printf("[WARN] Requested token %s did not yield any users in database\n", token)
 			return User{}
-		}else{
+		} else {
 			log.Fatal(err)
 		}
 	}
 
 	log.Printf("[INFO] API key request resulted in user %s\n", username)
-	return User{Username: username}	
+	return User{Username: username}
+}
+
+func markSubmissionAsFlagged(submission Submission) {
+	if submission.Id == "" {
+		log.Fatal("Cannot flag submission without an ID")
+	}
+
+	_, err := GetDB().Exec("UPDATE submissions SET flagged = true WHERE id = $1", submission.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[INFO] Flagged submission %s\n", submission.Id)
+}
+
+func markCommentAsFlagged(comment Comment) {
+	if comment.Id == "" {
+		log.Fatal("Cannot flag comment without an ID")
+	}
+
+	_, err := GetDB().Exec("UPDATE comments SET flagged = true WHERE id = $1", comment.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[INFO] Flagged comment %s\n", comment.Id)
+}
+
+// returns -> (error (can be nil), total weight of all reports, is flagged)
+func ReportSubmission(user User, submission Submission) (error, float64, bool) {
+	// check that submission exists
+	squery := SearchSubmission(submission)
+	if squery.Id == "" {
+		return errors.New("Unable to find submission with ID " + submission.Id), 0.0, false
+	}
+
+	// check that submission hasn't already been flagged
+	if squery.Flagged {
+		return errors.New("Submission " + submission.Id + " is already flagged, cannot report"), 0.0, false
+	}
+
+	var weight float64 = calculateReportWeight(user)
+
+	// insert the report
+	query := `INSERT INTO reports (reporter, target_type, target_id, target_user, rweight) VALUES ($1, $2, $3, $4, $5)`
+
+	_, err := GetDB().Exec(query, user.Username, "submission", submission.Id, submission.Username, weight)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// now check if the total weight is enough for a flagging
+	totalWeight := getTotalReportsWeight(submission.Id)
+	var wasFlagged bool = false
+	if totalWeight >= 1.0 {
+		markSubmissionAsFlagged(submission)
+		wasFlagged = true
+	}
+
+	return nil, totalWeight, wasFlagged
+}
+
+func ReportComment(comment Comment) (error, float64, bool) {
+	// check that comment exists
+	
+}
+
+// calculates how much a user's report should count based off
+func calculateReportWeight(user User) float64 {
+	userQueried := SearchUser(user)
+
+	var days int
+	err := GetDB().QueryRow("SELECT EXTRACT(DAY FROM age(NOW(), created_at)) AS days_old FROM users WHERE username=$1", userQueried.User.Username).Scan(&days)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	switch {
+		case days > 0 && days <= 1:
+			return 0.1
+		case days > 1 && days <= 7:
+			return 0.25
+		case days > 7 && days <= 28:
+			return 0.33
+		case days > 28:
+			return 0.5
+		default:
+			return 0.0
+	}
+}
+
+func getTotalReportsWeight(id string) float64 {
+
+	query := `
+		SELECT COALESCE(SUM(rweight), 0.0)
+		FROM reports
+		WHERE target_id = $1
+	`
+
+	var weight float64
+	err := GetDB().QueryRow(query, id).Scan(&weight)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return weight
+}
+
+func flagSubmission(submission Submission) {
+
+}
+
+func flagComment(comment Comment) {
+
 }
