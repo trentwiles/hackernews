@@ -1441,3 +1441,38 @@ func getTotalReportsWeight(id string) float64 {
 
 	return weight
 }
+
+func SelectAllReportsFromUser(offset int, user User) []Report {
+	if user.Username == "" {
+		log.Fatal("username cannot be blank when selecting reports from user")
+	}
+
+	query := `
+		SELECT id, reporter, target_type, target_id, target_user, rweight, created_at
+		FROM reports
+		WHERE reporter = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := GetDB().Query(query, user.Username, DEFAULT_SELECT_LIMIT, offset)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var reports []Report
+	for rows.Next() {
+		var current Report
+
+		if err := rows.Scan(&current.Id, &current.Reporter, &current.Target_type, &current.Target_id, &current.Target_user, &current.Target_weight, &current.Created_at); err != nil {
+			log.Fatal(err)
+		}
+
+		reports = append(reports, current)
+	}
+
+	log.Printf("[INFO] Reports query for user %s resulted in %d reports, using offset %d\n", user.Username, len(reports), offset)
+
+	return reports
+}

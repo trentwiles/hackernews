@@ -17,7 +17,7 @@ _See `docs/SETUP.md` for production and development setups._
 - Magic Link login system (password free, managed by JWT tokens)
 - Submission/Comment Posting (with full Google Captcha v3 support)
 - Submission/Comment Voting (upvotes/downvotes, options to sort by votes)
-- Ability to flag submissions for moderation
+- Ability to flag submissions/comments for moderation
 - User bio/birthday/full name customization on "account settings" page
 - Command line logging (HTTP request logging + logging from business logic files)
 - `.env` config files used on frontend & backend
@@ -46,8 +46,10 @@ _See `docs/SETUP.md` for production and development setups._
 | Post Submission        | ✅ Complete    | ✅ Complete    |                                                                                                                   |
 | User Profile Page      | ✅ Complete    | ✅ Complete    |                                                                                                                   |
 | Comments               | ✅ Complete    | ✅ Complete    | Future: implement replies to other comments, comments on user profile                                             |
-| Flagging/Reporting     | ✅ Complete    | 🟡 In Progress | Future: Need to display error upon trying to flag twice, need to add flagging for comments                        |
+| Flagging/Reporting     | ✅ Complete    | ✅ Complete    |                                                                                                                   |
 | Admin Console          | 🟡 In Progress | 🟡 In Progress | Lacking moderation features (view flagged posts, delete posts, delete users, see recent/problematic user signups) |
+| Help Pages/FAQ/Docs    | -              | 🟡 In Progress | Need to add some static pages with FAQs                                                                           |
+| Mobile Support         | -              | Not Started    | Need to ensure all functionality is present on a mobile device                                                    |
 
 ## To Do
 

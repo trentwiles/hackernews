@@ -21,6 +21,7 @@ func DumpForUser(user db.User) string {
 	var userSubmissions []db.BasicSubmission = db.LatestUserSubmissions(0, user) // pass 0 as offset, since we're working with a high limit
 	var userComments []db.Comment = db.LatestUserComments(0, user)
 	var userVotes []db.BasicSubmissionAndVote = db.GetAllUserVotes(user)
+	var userReports []db.Report = db.SelectAllReportsFromUser(0, user)
 
 	exportDir := "exports/" + user.Username
 	os.MkdirAll(exportDir, 0755)
@@ -61,6 +62,16 @@ func DumpForUser(user db.User) string {
 		}
 	} else {
 		if !writeJSONToFile(userVotes, exportDir+"/votes.json") {
+			return ""
+		}
+	}
+
+	if len(userReports) == 0 {
+		if !writeJSONToFile([]string{}, exportDir+"/reports.json") {
+			return ""
+		}
+	} else {
+		if !writeJSONToFile(userReports, exportDir+"/reports.json") {
 			return ""
 		}
 	}
