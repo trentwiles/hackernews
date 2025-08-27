@@ -1298,6 +1298,20 @@ func markCommentAsFlagged(comment Comment) {
 	log.Printf("[INFO] Flagged comment %s\n", comment.Id)
 }
 
+func hasUserReported(id string, user User) bool {
+	if id == "" || user.Username == "" {
+		log.Fatal("cannot check report status for blank ID or blank username")
+	}
+
+	var exists bool
+	err := GetDB().QueryRow("SELECT EXISTS(SELECT 1 FROM reports WHERE reporter = $1 AND target_id = $2)", user.Username, id).Scan(&exists)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return exists
+}
+
 // returns -> (total reporting weight, has been flagged following this report, error if present)
 func ReportSubmission(user User, submission Submission) (float64, bool, error) {
 	// check that submission exists
@@ -1311,12 +1325,17 @@ func ReportSubmission(user User, submission Submission) (float64, bool, error) {
 		return 0.0, false, errors.New("Submission " + submission.Id + " is already flagged, cannot report")
 	}
 
+	// check that the user hasn't already reported
+	if hasUserReported(submission.Id, user) {
+		return 0.0, false, errors.New("unable to flag, user has already flagged")
+	}
+
 	var weight float64 = calculateReportWeight(user)
 
 	// insert the report
 	query := `INSERT INTO reports (reporter, target_type, target_id, target_user, rweight) VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := GetDB().Exec(query, user.Username, "submission", submission.Id, submission.Username, weight)
+	_, err := GetDB().Exec(query, user.Username, "submission", submission.Id, squery.Username, weight)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1345,12 +1364,17 @@ func ReportComment(comment Comment, user User) (float64, bool, error) {
 		return 0.0, false, errors.New("Comment " + comment.Id + " is already flagged; cannot report")
 	}
 
+	// check that the user hasn't already reported
+	if hasUserReported(comment.Id, user) {
+		return 0.0, false, errors.New("unable to flag, user has already flagged")
+	}
+
 	var weight float64 = calculateReportWeight(user)
 
 	// insert the report
 	q := `INSERT INTO reports (reporter, target_type, target_id, target_user, rweight) VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := GetDB().Exec(q, user.Username, "comment", comment.Id, comment.Author, weight)
+	_, err := GetDB().Exec(q, user.Username, "comment", comment.Id, query.Author, weight)
 	if err != nil {
 		log.Fatal(err)
 	}

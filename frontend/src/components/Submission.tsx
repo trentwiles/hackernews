@@ -17,6 +17,7 @@ import {
   Trash,
   User as UserIcon,
   Send,
+  Flag,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -233,6 +234,34 @@ export default function Submission() {
         console.log(data);
 
         navigate("/?deleted=" + sid);
+        return;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  function flagPost() {
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/flag", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      body: JSON.stringify({
+        Id: sid,
+        Type: "submission",
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
         return;
       })
       .catch((error) => {
@@ -473,6 +502,16 @@ export default function Submission() {
                         >
                           <Share /> {shareButtonText}
                         </Button>
+                        {currentUser != null && currentUser != s.username &&
+                        (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => flagPost()}
+                          >
+                            <Flag />
+                          </Button>
+                        )}
                         {currentUser == s.username && (
                           <Button
                             variant="destructive"
