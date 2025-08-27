@@ -17,6 +17,7 @@ _See `docs/SETUP.md` for production and development setups._
 - Magic Link login system (password free, managed by JWT tokens)
 - Submission/Comment Posting (with full Google Captcha v3 support)
 - Submission/Comment Voting (upvotes/downvotes, options to sort by votes)
+- Ability to flag submissions for moderation
 - User bio/birthday/full name customization on "account settings" page
 - Command line logging (HTTP request logging + logging from business logic files)
 - `.env` config files used on frontend & backend
@@ -44,7 +45,8 @@ _See `docs/SETUP.md` for production and development setups._
 | News/Submission Feed   | ✅ Complete    | ✅ Complete    | Need to complete different kinds of sorts (newest, best, oldest), and requires pagination                         |
 | Post Submission        | ✅ Complete    | ✅ Complete    |                                                                                                                   |
 | User Profile Page      | ✅ Complete    | ✅ Complete    |                                                                                                                   |
-| Comments               | ✅ Complete    | ✅ Complete    | Future: implement replies to other comments                                                                                    |
+| Comments               | ✅ Complete    | ✅ Complete    | Future: implement replies to other comments, comments on user profile                                             |
+| Flagging/Reporting     | ✅ Complete    | 🟡 In Progress | Future: Need to display error upon trying to flag twice, need to add flagging for comments                        |
 | Admin Console          | 🟡 In Progress | 🟡 In Progress | Lacking moderation features (view flagged posts, delete posts, delete users, see recent/problematic user signups) |
 
 ## To Do

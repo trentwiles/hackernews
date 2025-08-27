@@ -76,6 +76,8 @@ export default function Submission() {
   const [newComment, setNewComment] = useState<string>("");
   const [submittingComment, setSubmittingComment] = useState<boolean>(false);
 
+  const [userFlagged, setUserFlagged] = useState<boolean>(false);
+
   useEffect(() => {
     if (sid === undefined || sid == "") {
       setPending(false);
@@ -162,11 +164,18 @@ export default function Submission() {
 
   // fetch the comments
   const fetchComments = () => {
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/comments?id=" + sid + "&username=" + (Cookies.get("username") || ""), {
-      headers: {
-        Authorization: "Bearer " + Cookies.get("token"),
-      },
-    })
+    fetch(
+      import.meta.env.VITE_API_ENDPOINT +
+        "/api/v1/comments?id=" +
+        sid +
+        "&username=" +
+        (Cookies.get("username") || ""),
+      {
+        headers: {
+          Authorization: "Bearer " + Cookies.get("token"),
+        },
+      }
+    )
       .then((res) => {
         if (res.status != 200) {
           throw new Error("unable to fetch comments"); // This will skip to catch
@@ -179,11 +188,11 @@ export default function Submission() {
         if (data.comments == null || data.comments.length == 0) {
           return;
         } else {
-          const res: comment[] = []
+          const res: comment[] = [];
           data.comments.forEach((item) => {
             const tmp: comment = {
               author: item.Author,
-              content: item.Content, 
+              content: item.Content,
               created_at: item.CreatedAt,
               flagged: item.Flagged,
               id: item.Id,
@@ -191,19 +200,19 @@ export default function Submission() {
               upvotes: item.Upvotes,
               downvotes: item.Downvotes,
               isUpvoted: item.HasUpvoted,
-              isDownvoted: item.HasDownvoted
-            }
-            res.push(tmp)
-          })
+              isDownvoted: item.HasDownvoted,
+            };
+            res.push(tmp);
+          });
 
-          setComments(res)
-          setPending(false)
+          setComments(res);
+          setPending(false);
         }
       })
       .catch((err) => {
         // whatever
         console.error(err);
-        setPending(false)
+        setPending(false);
         return;
       });
   };
@@ -242,6 +251,9 @@ export default function Submission() {
   }
 
   function flagPost() {
+    // no matter what happens, we disable the flagged button
+    setUserFlagged(true);
+
     fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/flag", {
       method: "POST",
       headers: {
@@ -307,11 +319,11 @@ export default function Submission() {
   // Add comment voting function
   function voteComment(commentId: string, intent: boolean) {
     // Optimistically update UI
-    setComments(prevComments => 
-      prevComments.map(comment => {
+    setComments((prevComments) =>
+      prevComments.map((comment) => {
         if (comment.id === commentId) {
           const newComment = { ...comment };
-          
+
           // Reset vote counts based on previous state
           if (comment.isUpvoted) {
             newComment.upvotes--;
@@ -319,7 +331,7 @@ export default function Submission() {
           if (comment.isDownvoted) {
             newComment.downvotes--;
           }
-          
+
           // Apply new vote
           if (intent) {
             newComment.upvotes++;
@@ -330,7 +342,7 @@ export default function Submission() {
             newComment.isUpvoted = false;
             newComment.isDownvoted = true;
           }
-          
+
           return newComment;
         }
         return comment;
@@ -364,6 +376,36 @@ export default function Submission() {
         toast.error("Failed to vote on comment");
         // Revert optimistic update on error
         fetchComments();
+      });
+  }
+
+  function flagComment(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+    e.currentTarget.style.display = "none";
+
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/flag", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
+      body: JSON.stringify({
+        Id: id,
+        Type: "comment",
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        return;
+      })
+      .catch((error) => {
+        console.log(error);
       });
   }
 
@@ -409,7 +451,7 @@ export default function Submission() {
         toast.success("Comment posted successfully");
         setNewComment("");
 
-        console.log(data)
+        console.log(data);
 
         // then, refresh comments
         fetchComments();
@@ -502,12 +544,12 @@ export default function Submission() {
                         >
                           <Share /> {shareButtonText}
                         </Button>
-                        {currentUser != null && currentUser != s.username &&
-                        (
+                        {currentUser != null && currentUser != s.username && (
                           <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => flagPost()}
+                            disabled={!userFlagged}
                           >
                             <Flag />
                           </Button>
@@ -590,7 +632,10 @@ export default function Submission() {
                     <CardContent className="py-6">
                       <div className="text-center text-gray-600">
                         <p>
-                          <Link to="/login" className="text-blue-600 hover:underline">
+                          <Link
+                            to="/login"
+                            className="text-blue-600 hover:underline"
+                          >
                             Log in
                           </Link>{" "}
                           to post a comment
@@ -641,9 +686,18 @@ export default function Submission() {
                                       </span>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <span>{datePrettyPrint(comment.created_at)}</span>
+                                      <span>
+                                        {datePrettyPrint(comment.created_at)}
+                                      </span>
                                     </TooltipContent>
                                   </Tooltip>
+                                  <a
+                                    className="text-muted-foreground text-sm"
+                                    style={{ cursor: "pointer" }}
+                                    onClick={(e) => flagComment(e, comment.id)}
+                                  >
+                                    (flag)
+                                  </a>
                                 </div>
                                 <p className="text-gray-700 leading-relaxed break-words overflow-wrap-anywhere">
                                   {comment.content}
@@ -653,32 +707,49 @@ export default function Submission() {
                                     This comment has been flagged
                                   </p>
                                 )}
-                                
+
                                 {/* Comment voting buttons */}
                                 <div className="flex items-center gap-2 mt-2">
                                   {currentUser && (
                                     <Button
-                                      variant={comment.isUpvoted ? "destructive" : "outline"}
+                                      variant={
+                                        comment.isUpvoted
+                                          ? "destructive"
+                                          : "outline"
+                                      }
                                       size="sm"
                                       className="h-7 px-2"
                                       disabled={comment.isUpvoted}
-                                      onClick={() => voteComment(comment.id, true)}
+                                      onClick={() =>
+                                        voteComment(comment.id, true)
+                                      }
                                     >
                                       <ArrowUp className="h-3 w-3" />
                                     </Button>
                                   )}
-                                  <Button variant="outline" size="sm" className="h-7 px-3">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-3"
+                                  >
                                     <span className="text-xs font-medium">
-                                      {comment.upvotes - comment.downvotes} upvotes
+                                      {comment.upvotes - comment.downvotes}{" "}
+                                      upvotes
                                     </span>
                                   </Button>
                                   {currentUser && (
                                     <Button
-                                      variant={comment.isDownvoted ? "destructive" : "outline"}
+                                      variant={
+                                        comment.isDownvoted
+                                          ? "destructive"
+                                          : "outline"
+                                      }
                                       size="sm"
                                       className="h-7 px-2"
                                       disabled={comment.isDownvoted}
-                                      onClick={() => voteComment(comment.id, false)}
+                                      onClick={() =>
+                                        voteComment(comment.id, false)
+                                      }
                                     >
                                       <ArrowDown className="h-3 w-3" />
                                     </Button>

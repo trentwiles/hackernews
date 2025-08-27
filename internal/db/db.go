@@ -107,6 +107,16 @@ type Comment struct {
 	HasDownvoted  bool // has the user in question downvoted this post? TRUE if so...
 }
 
+type Report struct {
+	Id string
+	Reporter string // who made the report (author)
+	Target_type string // what is being reported -> submission or comment
+	Target_id string // id of the reported item
+	Target_user string
+	Target_weight float64 // report weight, determined in following code
+	Created_at string // timestamp
+}
+
 // enum equiv in Go for audit log events
 // ('login', 'logout', 'failed_login', 'post', 'comment', 'post_click', 'sent_email')
 type AuditEvent string
