@@ -1240,6 +1240,38 @@ func ValidateUserAPIKey(token string) User {
 	return User{Username: username}
 }
 
+func SearchComment(comment Comment) Comment {
+	if comment.Id == "" {
+		log.Fatal("Please use an ID when searching for a comment")
+	}
+
+	rows, err := GetDB().Query("SELECT * FROM comments WHERE id = $1", comment.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var parentComment sql.NullString
+		err := rows.Scan(&comment.Id, &comment.InResponseTo, &comment.Content, &comment.Author, &parentComment, &comment.Flagged, &comment.CreatedAt)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if parentComment.Valid {
+			comment.ParentComment = parentComment.String
+		} else {
+			comment.ParentComment = ""
+		}
+
+		log.Printf("[INFO] Successful query for comment %s created at %s", comment.Id, comment.CreatedAt)
+
+		return comment
+	}
+
+	return Comment{}
+}
+
 func markSubmissionAsFlagged(submission Submission) {
 	if submission.Id == "" {
 		log.Fatal("Cannot flag submission without an ID")
@@ -1266,17 +1298,17 @@ func markCommentAsFlagged(comment Comment) {
 	log.Printf("[INFO] Flagged comment %s\n", comment.Id)
 }
 
-// returns -> (error (can be nil), total weight of all reports, is flagged)
-func ReportSubmission(user User, submission Submission) (error, float64, bool) {
+// returns -> (total reporting weight, has been flagged following this report, error if present)
+func ReportSubmission(user User, submission Submission) (float64, bool, error) {
 	// check that submission exists
 	squery := SearchSubmission(submission)
 	if squery.Id == "" {
-		return errors.New("Unable to find submission with ID " + submission.Id), 0.0, false
+		return 0.0, false, errors.New("Unable to find submission with ID " + submission.Id)
 	}
 
 	// check that submission hasn't already been flagged
 	if squery.Flagged {
-		return errors.New("Submission " + submission.Id + " is already flagged, cannot report"), 0.0, false
+		return 0.0, false, errors.New("Submission " + submission.Id + " is already flagged, cannot report")
 	}
 
 	var weight float64 = calculateReportWeight(user)
@@ -1297,12 +1329,41 @@ func ReportSubmission(user User, submission Submission) (error, float64, bool) {
 		wasFlagged = true
 	}
 
-	return nil, totalWeight, wasFlagged
+	return totalWeight, wasFlagged, nil
 }
 
-func ReportComment(comment Comment) (error, float64, bool) {
+// returns -> (total reporting weight, has been flagged following this report, error if present)
+func ReportComment(comment Comment, user User) (float64, bool, error) {
 	// check that comment exists
-	
+	query := SearchComment(comment)
+	if query.Id == "" {
+		return 0.0, false, errors.New("Unable to find comment with ID " + comment.Id)
+	}
+
+	// check that comment hasn't already been flagged
+	if query.Flagged {
+		return 0.0, false, errors.New("Comment " + comment.Id + " is already flagged; cannot report")
+	}
+
+	var weight float64 = calculateReportWeight(user)
+
+	// insert the report
+	q := `INSERT INTO reports (reporter, target_type, target_id, target_user, rweight) VALUES ($1, $2, $3, $4, $5)`
+
+	_, err := GetDB().Exec(q, user.Username, "comment", comment.Id, comment.Author, weight)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// now check if the total weight is enough for a flagging
+	totalWeight := getTotalReportsWeight(comment.Id)
+	var wasFlagged bool = false
+	if totalWeight >= 1.0 {
+		markCommentAsFlagged(comment)
+		wasFlagged = true
+	}
+
+	return totalWeight, wasFlagged, nil
 }
 
 // calculates how much a user's report should count based off
@@ -1344,12 +1405,4 @@ func getTotalReportsWeight(id string) float64 {
 	}
 
 	return weight
-}
-
-func flagSubmission(submission Submission) {
-
-}
-
-func flagComment(comment Comment) {
-
 }
