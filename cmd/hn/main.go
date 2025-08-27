@@ -71,6 +71,11 @@ type VoteRequest struct {
 	Upvote bool   `json:"upvote"`
 }
 
+type FlagRequest struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
+}
+
 var version string = "/api/v1"
 
 func main() {
@@ -938,6 +943,54 @@ func main() {
 				"status": dump.WipeExports() == nil,
 			},
 		)
+	})
+
+	app.Post(version+"/flag", func(c *fiber.Ctx) error {
+		success, username := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		if !success {
+			return c.Status(fiber.StatusUnauthorized).JSON(BasicResponse{Message: "not signed in", Status: fiber.StatusUnauthorized})
+		}
+
+		var req FlagRequest
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "cannot parse JSON",
+			})
+		}
+
+		if req.Id == "" || req.Type == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "id and type parameters required to make a valid report",
+			})
+		}
+
+		var flagErr error
+		var weight float64
+		var isFlagged bool
+
+		switch req.Type {
+		case "comment":
+			weight, isFlagged, flagErr = db.ReportComment(db.Comment{Id: req.Id}, db.User{Username: username})
+		case "submission":
+			weight, isFlagged, flagErr = db.ReportSubmission(db.User{Username: username}, db.Submission{Id: req.Id})
+		default:
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "type is invalid",
+			})
+		}
+
+		if flagErr != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "unable to flag due to upstream error",
+			})
+		}
+
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"currentWeight": weight,
+			"isFlagged":     isFlagged,
+		})
 	})
 
 	// 404
