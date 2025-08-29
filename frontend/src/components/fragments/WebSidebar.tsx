@@ -23,7 +23,17 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import NavUser from "@/components/fragments/NavUser";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -33,6 +43,47 @@ type User = {
   email: string;
   avatar: string;
 };
+
+type BreadcrumbItem = {
+  label: string;
+  href?: string;
+  isCurrentPage?: boolean;
+};
+
+// Reusable breadcrumb header component
+export function SidebarBreadcrumbHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItem[] }) {
+  return (
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <Separator
+        orientation="vertical"
+        className="mr-2 data-[orientation=vertical]:h-4"
+      />
+      {breadcrumbs.length > 0 && (
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbs.map((crumb, index) => (
+              <div key={index} className="flex items-center">
+                <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
+                  {crumb.isCurrentPage ? (
+                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink href={crumb.href || "#"}>
+                      {crumb.label}
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {index < breadcrumbs.length - 1 && (
+                  <BreadcrumbSeparator className={index === 0 ? "hidden md:block" : ""} />
+                )}
+              </div>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
+    </header>
+  );
+}
 
 export default function WebSidebar() {
   const [user, setUser] = useState<User>();
@@ -188,7 +239,7 @@ export default function WebSidebar() {
                       <span>Admin Panel</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+              </SidebarMenuItem>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
