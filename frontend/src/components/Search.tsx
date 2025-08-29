@@ -1,5 +1,5 @@
 import { getDomain, truncate } from "@/utils";
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -22,23 +22,29 @@ export default function Search() {
     const params = new URLSearchParams(window.location.search);
     const q = params.get("q");
     if (q !== null && q != "") {
-      setQuery(q)
-      document.title = `Search for '${q}' | ${import.meta.env.VITE_SERVICE_NAME}`
+      setQuery(q);
+      document.title = `Search for '${q}' | ${
+        import.meta.env.VITE_SERVICE_NAME
+      }`;
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (query == "") {
       console.log("Note: no query in search box. Exiting useEffect");
-      window.history.replaceState({}, '', '/search');
-      document.title = `Search | ${import.meta.env.VITE_SERVICE_NAME}`
+      window.history.replaceState({}, "", "/search");
+      document.title = `Search | ${import.meta.env.VITE_SERVICE_NAME}`;
       return;
     }
 
-    window.history.replaceState({}, '', '?q=' + query);
-    document.title = `Search for '${query}' | ${import.meta.env.VITE_SERVICE_NAME}`
+    window.history.replaceState({}, "", "?q=" + query);
+    document.title = `Search for '${query}' | ${
+      import.meta.env.VITE_SERVICE_NAME
+    }`;
 
-    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/searchSubmissions?q=" + query)
+    fetch(
+      import.meta.env.VITE_API_ENDPOINT + "/api/v1/searchSubmissions?q=" + query
+    )
       .then((response) => {
         if (response.status != 200) {
           throw new Error("non-200 HTTP status");
@@ -73,11 +79,20 @@ export default function Search() {
       });
   }, [query]);
 
+  const breadcrumbs = [
+    { label: "Search Results", href: "/search" },
+    {
+      label: query ? query : "",
+      href: query ? `/search?q=${query}` : "/search",
+    },
+  ];
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <WebSidebar />
-        <SidebarInset>
+      <WebSidebar />
+      <SidebarInset>
+        <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {/* Add a container div with padding */}
           <div className="px-6 py-6 md:px-8 lg:px-12">
             {/* Search Bar */}
@@ -112,30 +127,28 @@ export default function Search() {
               {/* Result list */}
               {results.length !== 0 &&
                 results.map((res, idx) => (
-                  <div className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer" key={idx}>
+                  <div
+                    className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer"
+                    key={idx}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <h3 className="font-semibold text-lg hover:underline">
-                          <Link
-                            to={"/submission/" + res.id}
-                          >
-                            {res.title}
-                          </Link>
+                          <Link to={"/submission/" + res.id}>{res.title}</Link>
                         </h3>
                         <p className="text-sm text-muted-foreground mb-2">
                           {truncate(res.body)}
                         </p>
                         <div className="flex gap-3 text-sm text-muted-foreground">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
-                            <a
-                              href={res.link}
-                              target="_blank"
-                            >
+                            <a href={res.link} target="_blank">
                               {getDomain(res.link)}
                             </a>
                           </span>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary">
-                            <Link to={`/u/${res.username}`}>u/{res.username}</Link>
+                            <Link to={`/u/${res.username}`}>
+                              u/{res.username}
+                            </Link>
                           </span>
                           <span>2 days ago</span>
                         </div>
@@ -145,8 +158,8 @@ export default function Search() {
                 ))}
             </div>
           </div>
-        </SidebarInset>
-      </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

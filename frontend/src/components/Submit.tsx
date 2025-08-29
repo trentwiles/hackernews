@@ -1,4 +1,4 @@
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ import Cookies from "js-cookie";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 export default function Submit() {
-  console.log(Cookies.get("token"))
+  console.log(Cookies.get("token"));
   const { executeRecaptcha } = useGoogleReCaptcha();
   const navigate = useNavigate();
 
@@ -46,17 +46,21 @@ export default function Submit() {
       return;
     }
     const timeoutId = setTimeout(() => {
-      fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/fetchWebsiteTitle?url=" + linkValue) // Replace with your actual endpoint
+      fetch(
+        import.meta.env.VITE_API_ENDPOINT +
+          "/api/v1/fetchWebsiteTitle?url=" +
+          linkValue
+      ) // Replace with your actual endpoint
         .then((res) => {
           if (res.status !== 200) {
-            throw new Error("non-200 status: " + res.status)
+            throw new Error("non-200 status: " + res.status);
           }
-          return res.json()
+          return res.json();
         })
         .then((json) => {
           // assuming the JSON response is 200 OK, we should have a response in the form:
           // {"title":"..."}
-          setValue("title", json.title)
+          setValue("title", json.title);
         })
         .catch((err) => console.error("Error fetching data:", err));
     }, 500);
@@ -112,11 +116,17 @@ export default function Submit() {
 
   const [isChecked, setIsChecked] = useState<boolean>(false);
 
+  const breadcrumbs = [
+    { label: "Submissions", href: "/top" },
+    { label: "New", isCurrentPage: true },
+  ];
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <WebSidebar />
-        <SidebarInset>
+      <WebSidebar />
+      <SidebarInset>
+        <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {/* BEGIN FORM */}
           <div className="max-w-5xl mx-auto p-4 w-full">
             <Card>
@@ -238,8 +248,8 @@ export default function Submit() {
             </Card>
           </div>
           {/* END FORM */}
-        </SidebarInset>
-      </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

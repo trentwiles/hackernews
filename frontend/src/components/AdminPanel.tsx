@@ -1,4 +1,4 @@
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import {
   Card,
   CardContent,
@@ -153,11 +153,16 @@ export default function AdminPanel() {
 
   const totalWeekPosts = chartData.reduce((sum, day) => sum + day.posts, 0);
 
+  const breadcrumbs = [
+    { label: "Settings", href: "/settings" },
+    { label: "Admin Panel", isCurrentPage: true },
+  ];
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <WebSidebar />
-        <SidebarInset>
+      <WebSidebar />
+      <SidebarInset>
+        <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+        <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
@@ -292,8 +297,8 @@ export default function AdminPanel() {
               </Card>
             )}
           </div>
-        </SidebarInset>
-      </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

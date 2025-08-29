@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import { SidebarInset, SidebarProvider } from "./ui/sidebar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -168,14 +168,20 @@ export default function User() {
       });
   }, [username]);
 
+  const breadcrumbs = [
+    { label: "Users", href: "/top" },
+    { label: (username ? username : "User Profile"), isCurrentPage: true },
+  ];
+
   return (
     !pending &&
     !error &&
     currentUser != undefined && (
       <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <WebSidebar />
-          <SidebarInset>
+        <WebSidebar />
+        <SidebarInset>
+          <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+          <div className="flex flex-1 flex-col gap-4 p-4">
             <div className="container mx-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Left Column - Profile Info (1/3) */}
@@ -199,7 +205,9 @@ export default function User() {
                         @{currentUser.username}
                       </CardTitle>
                       {currentUser.isAdmin && (
-                        <p className="text-sm text-gray-500 mt-1 text-left">Administrator</p>
+                        <p className="text-sm text-gray-500 mt-1 text-left">
+                          Administrator
+                        </p>
                       )}
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -353,8 +361,8 @@ export default function User() {
                 </div>
               </div>
             </div>
-          </SidebarInset>
-        </div>
+          </div>
+        </SidebarInset>
       </SidebarProvider>
     )
   );

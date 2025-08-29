@@ -51,7 +51,11 @@ type BreadcrumbItem = {
 };
 
 // Reusable breadcrumb header component
-export function SidebarBreadcrumbHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItem[] }) {
+export function SidebarBreadcrumbHeader({
+  breadcrumbs = [],
+}: {
+  breadcrumbs?: BreadcrumbItem[];
+}) {
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
@@ -64,17 +68,21 @@ export function SidebarBreadcrumbHeader({ breadcrumbs = [] }: { breadcrumbs?: Br
           <BreadcrumbList>
             {breadcrumbs.map((crumb, index) => (
               <div key={index} className="flex items-center">
-                <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
+                <BreadcrumbItem
+                  className={index === 0 ? "hidden md:block" : ""}
+                >
                   {crumb.isCurrentPage ? (
                     <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={crumb.href || "#"}>
-                      {crumb.label}
+                    <BreadcrumbLink>
+                      <Link to={crumb.href || "/"}>{crumb.label}</Link>
                     </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
                 {index < breadcrumbs.length - 1 && (
-                  <BreadcrumbSeparator className={index === 0 ? "hidden md:block" : ""} />
+                  <BreadcrumbSeparator
+                    className={index === 0 ? "hidden md:block" : ""}
+                  />
                 )}
               </div>
             ))}
@@ -129,15 +137,19 @@ export default function WebSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/">
+              <Link to="/">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{import.meta.env.VITE_SERVICE_NAME}</span>
-                  <span className="truncate text-xs">{import.meta.env.VITE_VERSION || "Unknown Version"}</span>
+                  <span className="truncate font-medium">
+                    {import.meta.env.VITE_SERVICE_NAME}
+                  </span>
+                  <span className="truncate text-xs">
+                    {import.meta.env.VITE_VERSION || "Unknown Version"}
+                  </span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -239,7 +251,7 @@ export default function WebSidebar() {
                       <span>Admin Panel</span>
                     </Link>
                   </SidebarMenuButton>
-              </SidebarMenuItem>
+                </SidebarMenuItem>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -247,7 +259,12 @@ export default function WebSidebar() {
       </SidebarContent>
       <SidebarFooter>
         {isAuth && user != undefined && (
-          <NavUser avatar={user.avatar} email={user.email} name={user.name} isAdmin={isAdmin} />
+          <NavUser
+            avatar={user.avatar}
+            email={user.email}
+            name={user.name}
+            isAdmin={isAdmin}
+          />
         )}
         {!isAuth && (
           <SidebarMenuItem key={"login"}>

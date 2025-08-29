@@ -1,4 +1,4 @@
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,12 +36,12 @@ type FormData = {
 // into a string format (MM-DD-YYYY) that the backend (aka postgres)
 // can understand
 function formatDateForBackend(date: Date | undefined): string {
-  if (!date) return '';
-  
+  if (!date) return "";
+
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
   return `${month}-${day}-${year}`;
 }
 
@@ -51,31 +51,31 @@ function formatDateForBackend(date: Date | undefined): string {
 // (also provides support for other non-ISO formats for backwards compatability)
 function parseBackendDate(dateStr: string | undefined): Date | undefined {
   if (!dateStr) return undefined;
-  
-  if (dateStr.includes('T')) {
-    const datePart = dateStr.split('T')[0];
-    const [year, month, day] = datePart.split('-').map(n => parseInt(n, 10));
-    
+
+  if (dateStr.includes("T")) {
+    const datePart = dateStr.split("T")[0];
+    const [year, month, day] = datePart.split("-").map((n) => parseInt(n, 10));
+
     return new Date(year, month - 1, day, 12, 0, 0);
   }
-  
+
   if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    const [year, month, day] = dateStr.split('-').map(n => parseInt(n, 10));
+    const [year, month, day] = dateStr.split("-").map((n) => parseInt(n, 10));
     return new Date(year, month - 1, day, 12, 0, 0);
   }
-  
+
   if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
-    const [month, day, year] = dateStr.split('-').map(n => parseInt(n, 10));
+    const [month, day, year] = dateStr.split("-").map((n) => parseInt(n, 10));
     return new Date(year, month - 1, day, 12, 0, 0);
   }
-  
+
   console.error("Unable to parse date:", dateStr);
   return undefined;
 }
 
 export default function Settings() {
   const [reloads, setReloads] = useState<number>(0);
-  const [submitButtonText, setSubmitButtonText] = useState<string>("Submit")
+  const [submitButtonText, setSubmitButtonText] = useState<string>("Submit");
 
   const {
     register,
@@ -114,8 +114,8 @@ export default function Settings() {
         return response.json();
       })
       .then(() => {
-        console.log("success")
-        setReloads((prev) => prev + 1)
+        console.log("success");
+        setReloads((prev) => prev + 1);
       })
       .catch((err) => {
         console.error("Fetch error:", err);
@@ -123,42 +123,45 @@ export default function Settings() {
   };
 
   useEffect(() => {
-  fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/me", {
-    headers: {
-      Authorization: "Bearer " + Cookies.get("token"),
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Failed to fetch user data");
-      }
-      return response.json();
+    fetch(import.meta.env.VITE_API_ENDPOINT + "/api/v1/me", {
+      headers: {
+        Authorization: "Bearer " + Cookies.get("token"),
+      },
     })
-    .then((data) => {
-      setValue("fullName", data.metadata.full_name);
-      setValue("body", data.metadata.bio);
-      
-      // Parse the date properly
-      if (data.metadata.birthday) {
-        setValue("dateOfBirth", parseBackendDate(data.metadata.birthday));
-      }
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setValue("fullName", data.metadata.full_name);
+        setValue("body", data.metadata.bio);
 
-      setSubmitButtonText("Saved!")
-      setTimeout(() => {
-        setSubmitButtonText("Submit")
-      }, 1000)
-    })
-    .catch((err) => {
-      console.error("Fetch error:", err);
-      setSubmitButtonText("Error Saving")
-    });
-}, [reloads]);
+        // Parse the date properly
+        if (data.metadata.birthday) {
+          setValue("dateOfBirth", parseBackendDate(data.metadata.birthday));
+        }
+
+        setSubmitButtonText("Saved!");
+        setTimeout(() => {
+          setSubmitButtonText("Submit");
+        }, 1000);
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        setSubmitButtonText("Error Saving");
+      });
+  }, [reloads]);
+  
+  const breadcrumbs = [{ label: "Settings", isCurrentPage: true }];
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <WebSidebar />
-        <SidebarInset>
+      <WebSidebar />
+      <SidebarInset>
+        <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {/* BEGIN FORM */}
           <div className="max-w-5xl mx-auto p-4 w-full">
             <Card>
@@ -291,8 +294,8 @@ export default function Settings() {
             </Card>
           </div>
           {/* END FORM */}
-        </SidebarInset>
-      </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

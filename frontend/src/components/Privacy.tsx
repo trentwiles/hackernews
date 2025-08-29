@@ -1,4 +1,4 @@
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -36,11 +36,17 @@ export default function Privacy() {
       });
   }
 
+  const breadcrumbs = [
+    { label: "Settings", href: "/settings" },
+    { label: "Privacy & Data Export", isCurrentPage: true },
+  ];
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <WebSidebar />
-        <SidebarInset>
+      <WebSidebar />
+      <SidebarInset>
+        <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {/* BEGIN FORM */}
           <div className="max-w-5xl mx-auto p-4 w-full">
             <Card>
@@ -70,15 +76,24 @@ export default function Privacy() {
                   <>
                     <p>
                       <span style={{ color: `green` }}>Export complete.</span>
-                      <a href={import.meta.env.VITE_API_ENDPOINT + "/api/v1/dump?authToken=" + Cookies.get("token")} target="_blank">&nbsp;Click here to download.</a>
+                      <a
+                        href={
+                          import.meta.env.VITE_API_ENDPOINT +
+                          "/api/v1/dump?authToken=" +
+                          Cookies.get("token")
+                        }
+                        target="_blank"
+                      >
+                        &nbsp;Click here to download.
+                      </a>
                     </p>
                   </>
                 )}
               </CardContent>
             </Card>
           </div>
-        </SidebarInset>
-      </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

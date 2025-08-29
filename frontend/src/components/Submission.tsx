@@ -1,4 +1,4 @@
-import WebSidebar from "./fragments/WebSidebar";
+import WebSidebar, { SidebarBreadcrumbHeader } from "./fragments/WebSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import {
   Card,
@@ -464,16 +464,20 @@ export default function Submission() {
       });
   }
 
-  console.log(canVote + " <-- can vote???");
+  const breadcrumbs = [
+    { label: "Submissions", href: "/top" },
+    { label: s ? s.title : "", isCurrentPage: true },
+  ];
 
   return (
     !pending &&
     !error &&
     s !== undefined && (
       <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <WebSidebar />
-          <SidebarInset>
+        <WebSidebar />
+        <SidebarInset>
+          <SidebarBreadcrumbHeader breadcrumbs={breadcrumbs} />
+          <div className="flex flex-1 flex-col gap-4 p-4">
             <div className="min-h-screen bg-gray-50 py-8 px-4">
               <div className="max-w-3xl mx-auto space-y-6">
                 <Card className="shadow-sm">
@@ -765,8 +769,8 @@ export default function Submission() {
                 </Card>
               </div>
             </div>
-          </SidebarInset>
-        </div>
+          </div>
+        </SidebarInset>
       </SidebarProvider>
     )
   );
