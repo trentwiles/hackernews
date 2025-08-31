@@ -1,3 +1,7 @@
 # Frontend
 
-<!-- Future: document frontend and .env -->
+```bash
+npm i
+npm run build
+# ^^^ ouputs to frontend/dist
+```

@@ -32,6 +32,7 @@ import {
 import Cookies from "js-cookie";
 import { Textarea } from "./ui/textarea";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import SafeMarkdown from "./markdown-editor";
 
 type submission = {
   username: string;
@@ -500,7 +501,8 @@ export default function Submission() {
 
                   <CardContent className="space-y-4">
                     <div className="prose prose-gray max-w-none">
-                      <p className="text-gray-700 leading-relaxed">{s.body}</p>
+                      {/* <p className="text-gray-700 leading-relaxed">{s.body}</p> */}
+                      <SafeMarkdown content={s.body}></SafeMarkdown>
                     </div>
 
                     <div className="flex items-center gap-4 pt-4 border-t">

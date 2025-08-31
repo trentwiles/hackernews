@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"fmt"
 	"log"
 	"net/http"
@@ -992,6 +993,27 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"currentWeight": weight,
 			"isFlagged":     isFlagged,
+		})
+	})
+
+	app.Get(version+"/urlCheck", func(c *fiber.Ctx) error {
+		success, _ := jwt.ParseAuthHeader(c.Get("Authorization"))
+
+		q := c.Query("q")
+		if q == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Please pass a `q` parameter",
+			})
+		}
+
+		// logic to inspect to the URL..
+		// Google Safebrowsing? VirusTotal? sounds like a future problem
+		num := rand.Intn(2)
+
+		return c.JSON(fiber.Map{
+			"status": 200,
+			"passed": num == 1, // true = no malware, false = malware
+			"isAuthenticated": success,
 		})
 	})
 

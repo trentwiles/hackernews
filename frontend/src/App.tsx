@@ -23,6 +23,7 @@ import { Helmet } from "react-helmet";
 import ReactGA from "react-ga4";
 import { useEffect } from "react";
 import Privacy from "./components/Privacy";
+import UrlCheck from "./components/UrlCheck";
 
 const SERVICE_NAME = import.meta.env.VITE_SERVICE_NAME;
 
@@ -177,6 +178,17 @@ function App() {
                     <title>Submission | {SERVICE_NAME}</title>
                   </Helmet>
                   <Submission />
+                </>
+              }
+            />
+            <Route
+              path="/urlCheck"
+              element={
+                <>
+                  <Helmet>
+                    <title>Please Wait... | {SERVICE_NAME}</title>
+                  </Helmet>
+                  <UrlCheck />
                 </>
               }
             />

@@ -65,19 +65,15 @@ export function LoginForm({
 
         return response.json();
       })
-      .then((data) => {
-        console.log(data);
-        setCanSubmit(true);
-
+      .then(() => {
         navigate("/login-thanks?email=" + email);
         return;
       })
       .catch((error) => {
         console.log(error);
+        setLoginText("Log In");
         setCanSubmit(true);
       });
-
-    setLoginText("Log In");
   };
 
   return (
